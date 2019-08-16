@@ -14,4 +14,5 @@ LinkingTo: Rcpp,RcppArmadillo, RcppParallel
 Imports: Rcpp,RcppArmadillo, RcppParallel
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
+SystemRequirements: GNU make
 Packaged: 2018-05-12 16:19:58 UTC; Liqun

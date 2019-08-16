@@ -6,26 +6,6 @@
 
 using namespace Rcpp;
 
-// QRADM
-arma::vec QRADM(arma::mat xr, arma::vec yr, double ta, double rhor, double lambdar, int iter, bool intercept, int M, String penalty, double a);
-RcppExport SEXP _QRADMM_QRADM(SEXP xrSEXP, SEXP yrSEXP, SEXP taSEXP, SEXP rhorSEXP, SEXP lambdarSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP MSEXP, SEXP penaltySEXP, SEXP aSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type xr(xrSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type yr(yrSEXP);
-    Rcpp::traits::input_parameter< double >::type ta(taSEXP);
-    Rcpp::traits::input_parameter< double >::type rhor(rhorSEXP);
-    Rcpp::traits::input_parameter< double >::type lambdar(lambdarSEXP);
-    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
-    Rcpp::traits::input_parameter< bool >::type intercept(interceptSEXP);
-    Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    Rcpp::traits::input_parameter< String >::type penalty(penaltySEXP);
-    Rcpp::traits::input_parameter< double >::type a(aSEXP);
-    rcpp_result_gen = Rcpp::wrap(QRADM(xr, yr, ta, rhor, lambdar, iter, intercept, M, penalty, a));
-    return rcpp_result_gen;
-END_RCPP
-}
 // QRADMMCPP
 arma::vec QRADMMCPP(arma::mat x, arma::vec y, double tau, double rho, double lambda, int iter, bool intercept, String penalty, double a, double lambda1, double lambda2);
 RcppExport SEXP _QRADMM_QRADMMCPP(SEXP xSEXP, SEXP ySEXP, SEXP tauSEXP, SEXP rhoSEXP, SEXP lambdaSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP penaltySEXP, SEXP aSEXP, SEXP lambda1SEXP, SEXP lambda2SEXP) {
@@ -47,10 +27,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// QRADM
+arma::vec QRADM(arma::mat xr, arma::vec yr, double ta, double rhor, double lambdar, int iter, bool intercept, int M, String penalty, double a);
+RcppExport SEXP _QRADMM_QRADM(SEXP xrSEXP, SEXP yrSEXP, SEXP taSEXP, SEXP rhorSEXP, SEXP lambdarSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP MSEXP, SEXP penaltySEXP, SEXP aSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type xr(xrSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type yr(yrSEXP);
+    Rcpp::traits::input_parameter< double >::type ta(taSEXP);
+    Rcpp::traits::input_parameter< double >::type rhor(rhorSEXP);
+    Rcpp::traits::input_parameter< double >::type lambdar(lambdarSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    Rcpp::traits::input_parameter< bool >::type intercept(interceptSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< String >::type penalty(penaltySEXP);
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    rcpp_result_gen = Rcpp::wrap(QRADM(xr, yr, ta, rhor, lambdar, iter, intercept, M, penalty, a));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_QRADMM_QRADM", (DL_FUNC) &_QRADMM_QRADM, 10},
     {"_QRADMM_QRADMMCPP", (DL_FUNC) &_QRADMM_QRADMMCPP, 11},
+    {"_QRADMM_QRADM", (DL_FUNC) &_QRADMM_QRADM, 10},
     {NULL, NULL, 0}
 };
 
