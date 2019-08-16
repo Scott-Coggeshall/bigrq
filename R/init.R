@@ -1,3 +1,3 @@
 #' @useDynLib QRADMM
-#' @importFrom Rcpp sourceCpp RcppParallel
+#' @importFrom Rcpp sourceCpp
 NULL
