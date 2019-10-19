@@ -27,6 +27,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// matInv
+arma::mat matInv(arma::mat x);
+RcppExport SEXP _QRADMM_matInv(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(matInv(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // QRADM
 arma::vec QRADM(arma::mat xr, arma::vec yr, double ta, double rhor, double lambdar, int iter, bool intercept, int M, String penalty, double a);
 RcppExport SEXP _QRADMM_QRADM(SEXP xrSEXP, SEXP yrSEXP, SEXP taSEXP, SEXP rhorSEXP, SEXP lambdarSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP MSEXP, SEXP penaltySEXP, SEXP aSEXP) {
@@ -50,6 +61,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_QRADMM_QRADMMCPP", (DL_FUNC) &_QRADMM_QRADMMCPP, 11},
+    {"_QRADMM_matInv", (DL_FUNC) &_QRADMM_matInv, 1},
     {"_QRADMM_QRADM", (DL_FUNC) &_QRADMM_QRADM, 10},
     {NULL, NULL, 0}
 };
