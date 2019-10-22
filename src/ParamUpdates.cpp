@@ -36,5 +36,5 @@ arma::vec betai = dat*(xr.t()*(yr-rr+ur/rho)-etar/rho + beta);
 arma::vec ui=ur+rho*(yr-xbetai-ri);
 arma::vec etai=etar+rho*(betai-beta);
 
-return List::create(Named("betai") = betai, Named("ui") = ui, Named("etai") = etai);
+return List::create(Named("betai") = betai, Named("etai") = etai);
 }
