@@ -3,6 +3,9 @@
 using namespace Rcpp;
 using namespace arma;
 
+#include "header.hpp"
+
+// [[Rcpp::export]]
 arma::vec shrinkcpp1(arma::vec u, arma::vec v){
     arma::vec w=(1+sign(u-v))/2%(u-v)-(1+sign(-u-v))/2%(-u-v);
     return w;
