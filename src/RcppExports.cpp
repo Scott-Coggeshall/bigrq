@@ -6,6 +6,29 @@
 
 using namespace Rcpp;
 
+// ParamUpdates
+List ParamUpdates(arma::vec betar, arma::vec etar, arma::mat xr, arma::vec yr, arma::mat dat, arma::vec ur, arma::vec rr, arma::vec beta, double rho, double alpha, double tau, int n, int ni);
+RcppExport SEXP _QRADMM_ParamUpdates(SEXP betarSEXP, SEXP etarSEXP, SEXP xrSEXP, SEXP yrSEXP, SEXP datSEXP, SEXP urSEXP, SEXP rrSEXP, SEXP betaSEXP, SEXP rhoSEXP, SEXP alphaSEXP, SEXP tauSEXP, SEXP nSEXP, SEXP niSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type betar(betarSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type etar(etarSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type xr(xrSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type yr(yrSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dat(datSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type ur(urSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type rr(rrSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type ni(niSEXP);
+    rcpp_result_gen = Rcpp::wrap(ParamUpdates(betar, etar, xr, yr, dat, ur, rr, beta, rho, alpha, tau, n, ni));
+    return rcpp_result_gen;
+END_RCPP
+}
 // QRADMMCPP
 arma::vec QRADMMCPP(arma::mat x, arma::vec y, double tau, double rho, double lambda, int iter, bool intercept, String penalty, double a, double lambda1, double lambda2);
 RcppExport SEXP _QRADMM_QRADMMCPP(SEXP xSEXP, SEXP ySEXP, SEXP tauSEXP, SEXP rhoSEXP, SEXP lambdaSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP penaltySEXP, SEXP aSEXP, SEXP lambda1SEXP, SEXP lambda2SEXP) {
@@ -38,6 +61,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// shrinkcpp1
+arma::vec shrinkcpp1(arma::vec u, arma::vec v);
+RcppExport SEXP _QRADMM_shrinkcpp1(SEXP uSEXP, SEXP vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type u(uSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(shrinkcpp1(u, v));
+    return rcpp_result_gen;
+END_RCPP
+}
 // QRADM
 arma::vec QRADM(arma::mat xr, arma::vec yr, double ta, double rhor, double lambdar, int iter, bool intercept, int M, String penalty, double a);
 RcppExport SEXP _QRADMM_QRADM(SEXP xrSEXP, SEXP yrSEXP, SEXP taSEXP, SEXP rhorSEXP, SEXP lambdarSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP MSEXP, SEXP penaltySEXP, SEXP aSEXP) {
@@ -60,8 +95,10 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_QRADMM_ParamUpdates", (DL_FUNC) &_QRADMM_ParamUpdates, 13},
     {"_QRADMM_QRADMMCPP", (DL_FUNC) &_QRADMM_QRADMMCPP, 11},
     {"_QRADMM_matInv", (DL_FUNC) &_QRADMM_matInv, 1},
+    {"_QRADMM_shrinkcpp1", (DL_FUNC) &_QRADMM_shrinkcpp1, 2},
     {"_QRADMM_QRADM", (DL_FUNC) &_QRADMM_QRADM, 10},
     {NULL, NULL, 0}
 };
