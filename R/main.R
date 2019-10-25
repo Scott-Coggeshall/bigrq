@@ -10,7 +10,7 @@ split_data <- function(data_set, n_chunks){
 }
 
 
-update_beta <- function(penalty, pen_deriv, lambda, beta_mat, eta_avg){
+update_beta <- function(penalty, pen_deriv, lambda, gamma, beta_mat, eta_avg){
   
   M <- nrow(beta_mat)
   
@@ -20,7 +20,7 @@ update_beta <- function(penalty, pen_deriv, lambda, beta_mat, eta_avg){
     
    update1 <- beta_vec + eta_avg/gamma - lambda/(M*gamma) 
    update2 <- -beta_vec - eta_avg/gamma - lambda/(M*gamma)
-   max(0, update) - min(0, update)
+   pmax(0, update1) - pmin(0, update2)
     
   } else if(penalty == "scad" | penalty == "mcp"){
       
@@ -50,7 +50,7 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau){
   
 
   iter <- 1
-  beta_i <- eta_i <- matrix(0, nrow = p, ncol = M)
+  beta_mat <- eta_mat <- matrix(0, nrow = p, ncol = M)
   beta_avg <- eta_avg <- rowMeans(beta_i)
   
   u_list <- r_list <- lapply(1:M, function(x) rep(0, nrow(designmat_list[[x]])))
@@ -68,9 +68,9 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau){
      
    } 
     
-   beta_i <- t(sapply(iter_run, function(x) x$betai))
+   beta_i <- sapply(iter_run, function(x) x$betai)
    
-   eta_i <- t(sapply(iter_run, function(x) x$etai))
+   eta_i <- sapply(iter_run, function(x) x$etai)
    
    iter <- iter + 1
     
