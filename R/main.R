@@ -36,6 +36,7 @@ update_beta <- function(penalty, pen_deriv, lambda, gamma, beta_mat, eta_avg){
   
 }
 
+#' @export
 main <- function(dat, M, intercept, maxiter, gamma, lambda, tau){
   
   # splitting dat into M chunks so that these can be iterated over
@@ -57,7 +58,7 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau){
   
   while(iter < maxiter){
   
-   beta_global_i <- update_beta(penalty, pen_deriv, lambda, beta_i, eta_avg)
+   beta_global_i <- update_beta(penalty, pen_deriv, lambda, beta_i, mean(eta_i))
    
           
    iter_run <- foreach(dat_i = dat_iter, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list ) %dopar%{

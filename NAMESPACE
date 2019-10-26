@@ -3,6 +3,7 @@
 export(ParamUpdates)
 export(QPADM)
 export(QRADMM)
+export(main)
 export(matInv)
 importFrom(Rcpp,sourceCpp)
 useDynLib(QRADMM)
