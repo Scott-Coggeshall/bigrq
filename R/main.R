@@ -12,7 +12,7 @@ split_data <- function(data_set, n_chunks){
 
 update_beta <- function(penalty, pen_deriv, lambda, gamma, beta_mat, eta_avg){
   
-  M <- nrow(beta_mat)
+  M <- ncol(beta_mat)
   
   beta_vec <- rowMeans(beta_mat)
   
@@ -58,10 +58,10 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau){
   
   while(iter < maxiter){
   
-   beta_global_i <- update_beta(penalty, pen_deriv, lambda, beta_i, mean(eta_i))
+   beta_global_i <- update_beta(penalty, pen_deriv, lambda, beta_mat, rowMeans(eta_mat))
    
           
-   iter_run <- foreach(dat_i = dat_iter, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list ) %dopar%{
+   iter_run <- foreach(beta_i = itertools::isplitCols(beta_mat), eta_i = itertools::isplitCols(eta_mat), dat_i = dat_iter, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list, .packages = "QRADMM" ) %dopar%{
      
      n_i <- nrow(design_i)
      ParamUpdates(betar = beta_i, etar = eta_i, xr = design_i, yr = outcome_i, dat = dat_i, ur = u_i, rr = r_i, beta = beta_global_i, alpha = alpha, tau = tau, n = n, ni = n_i )
@@ -69,9 +69,9 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau){
      
    } 
     
-   beta_i <- sapply(iter_run, function(x) x$betai)
+   beta_mat <- sapply(iter_run, function(x) x$betai)
    
-   eta_i <- sapply(iter_run, function(x) x$etai)
+   eta_mat <- sapply(iter_run, function(x) x$etai)
    
    iter <- iter + 1
     
