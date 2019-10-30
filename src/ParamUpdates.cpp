@@ -31,10 +31,10 @@ List ParamUpdates(arma::vec betar, arma::vec etar, arma::mat xr, arma::vec yr, a
 arma::mat xbetai=alpha*xr*betar+(1-alpha)*(yr-rr);
 arma::vec ri=shrinkcpp1(ur/rho+yr-xbetai-.5*(2*tau-1)/(n*rho),.5*arma::ones<arma::vec>(ni)/(n*rho));
 //update betai
-arma::vec betai = dat*(xr.t()*(yr-rr+ur/rho)-etar/rho + beta);
+arma::vec betai = dat*(xr.t()*(yr-ri+ur/rho)-etar/rho + beta);
 //update u and eta
 arma::vec ui=ur+rho*(yr-xbetai-ri);
 arma::vec etai=etar+rho*(betai-beta);
 
-return List::create(Named("betai") = betai, Named("etai") = etai);
+return List::create(Named("betai") = betai, Named("etai") = etai, Named("ui") = ui);
 }
