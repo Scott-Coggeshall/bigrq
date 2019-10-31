@@ -28,6 +28,7 @@ List ParamUpdates(arma::vec betar, arma::vec etar, arma::mat xr, arma::vec yr, a
 //arma::vec yi=y.subvec(ni*i,ni*i+ni-1),ui=u.subvec(ni*i,ni*i+ni-1);
 //arma::vec beta_i=betai.col(i),ri = r.subvec(ni*i,ni*i+ni-1);
 //arma::mat xi=x.rows(ni*i,ni*i+ni-1);
+rho = rho/n;
 arma::mat xbetai=alpha*xr*betar+(1-alpha)*(yr-rr);
 arma::vec ri=shrinkcpp1(ur/rho+yr-xbetai-.5*(2*tau-1)/(n*rho),.5*arma::ones<arma::vec>(ni)/(n*rho));
 //update betai
@@ -36,5 +37,5 @@ arma::vec betai = dat*(xr.t()*(yr-ri+ur/rho)-etar/rho + beta);
 arma::vec ui=ur+rho*(yr-xbetai-ri);
 arma::vec etai=etar+rho*(betai-beta);
 
-return List::create(Named("betai") = betai, Named("etai") = etai, Named("ui") = ui);
+return List::create(Named("betai") = betai, Named("etai") = etai, Named("ui") = ui, Named("ri") = ri);
 }

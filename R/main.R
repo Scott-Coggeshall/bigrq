@@ -9,8 +9,18 @@ split_data <- function(data_set, n_chunks){
   
 }
 
+shrink <- function(u, v){
+  
+  
+  (1 + sign(u - v))/2*(u - v) - (1 + sign(-u - v))/2*(-u-v)
+  
+  
+  
+}
 
-update_beta <- function(penalty, pen_deriv, lambda, gamma, beta_mat, eta_avg){
+
+
+update_beta <- function(penalty, pen_deriv, lambda, rho, beta_mat, eta_avg){
   
   M <- ncol(beta_mat)
   
@@ -18,9 +28,7 @@ update_beta <- function(penalty, pen_deriv, lambda, gamma, beta_mat, eta_avg){
   
   if(penalty == "lasso"){
     
-   update1 <- beta_vec + eta_avg/gamma - lambda/(M*gamma) 
-   update2 <- -beta_vec - eta_avg/gamma - lambda/(M*gamma)
-   pmax(0, update1) - pmin(0, update2)
+  shrink(beta_vec + eta_avg/rho, lambda/(M*rho))
     
   } else if(penalty == "scad" | penalty == "mcp"){
       
@@ -36,8 +44,10 @@ update_beta <- function(penalty, pen_deriv, lambda, gamma, beta_mat, eta_avg){
   
 }
 
+
+
 #' @export
-main <- function(dat, M, intercept, maxiter, gamma, lambda, tau, rho, alpha){
+main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha){
   
   # splitting dat into M chunks so that these can be iterated over
   # in the foreach loop
@@ -54,12 +64,17 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau, rho, alpha){
   beta_mat <- eta_mat <- matrix(0, nrow = p, ncol = M)
   beta_avg <- eta_avg <- rowMeans(beta_mat)
   
-  u_list <- r_list <- lapply(1:M, function(x) rep(0, nrow(designmat_list[[x]])))
+  u_list <- lapply(1:M, function(x) rep(0, nrow(designmat_list[[x]])))
+  
+  r_list <- outcome_list
+  
   n <- nrow(dat)
+  p <- ncol(dat) - 1
+  
   while(iter < maxiter){
-   print(iter)
-   beta_global_i <- update_beta(penalty, pen_deriv, lambda, gamma, beta_mat, rowMeans(eta_mat))
-   
+ 
+   beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
+
           
    iter_run <- foreach(beta_i = itertools::isplitCols(beta_mat, chunks = M), eta_i = itertools::isplitCols(eta_mat, chunks = M), dat_i = dat_inverses, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list, .packages = "QRADMM" ) %dopar%{
      
@@ -75,8 +90,10 @@ main <- function(dat, M, intercept, maxiter, gamma, lambda, tau, rho, alpha){
    
    u_list <- lapply(iter_run, function(x) x$ui)
    
+   r_list <- lapply(iter_run, function(x) x$ri)
+   
    iter <- iter + 1
-    
+  
   }
   
   beta_global_i
