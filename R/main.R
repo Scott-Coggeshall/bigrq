@@ -96,7 +96,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
    
    r_list <- lapply(iter_run, function(x) x$ri)
    
-   keep_going <- !check_convergence(dat, rho, beta_global_i, beta_old, unlist(r_list), unlist(u_list), abstol, reltol)
+   keep_going <- !check_convergence(dat, rho, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
    iter <- iter + 1
   
   }
