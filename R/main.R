@@ -59,8 +59,10 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
   
   dat_inverses <- foreach(dat_list, function(x) solve(crossprod(x[, -1]) + diag(1, nrow = ncol(x[, -1]))))
   
+  n <- nrow(dat)
+  p <- ncol(dat) - 1
 
-  iter <- 1
+  beta_global_i <- rep(0, p)
   beta_mat <- eta_mat <- matrix(0, nrow = p, ncol = M)
   beta_avg <- eta_avg <- rowMeans(beta_mat)
   
@@ -68,10 +70,12 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
   
   r_list <- outcome_list
   
-  n <- nrow(dat)
-  p <- ncol(dat) - 1
+
   
-  while(iter < maxiter){
+  iter <- 1
+  keep_going <- T
+  
+  while(keep_going || iter < maxiter){
    beta_old <- beta_global_i
    beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
 
@@ -97,6 +101,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
   
   }
   
+  print(iter)
   beta_global_i
   
   
