@@ -47,7 +47,7 @@ update_beta <- function(penalty, pen_deriv, lambda, rho, beta_mat, eta_avg){
 
 
 #' @export
-main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha){
+main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1e-7, reltol = 1e-4){
   
   # splitting dat into M chunks so that these can be iterated over
   # in the foreach loop
@@ -72,7 +72,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha){
   p <- ncol(dat) - 1
   
   while(iter < maxiter){
- 
+   beta_old <- beta_global_i
    beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
 
           
@@ -92,6 +92,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha){
    
    r_list <- lapply(iter_run, function(x) x$ri)
    
+   keep_going <- !check_convergence(dat, rho, beta_global_i, beta_old, unlist(r_list), unlist(u_list), abstol, reltol)
    iter <- iter + 1
   
   }
