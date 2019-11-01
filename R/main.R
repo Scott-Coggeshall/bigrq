@@ -57,7 +57,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha){
   
   designmat_list <- lapply(dat_list, function(x) x[, -1])
   
-  dat_inverses <- lapply(dat_list, function(x) solve(crossprod(x[, -1]) + diag(1, nrow = ncol(x[, -1]))))
+  dat_inverses <- foreach(dat_list, function(x) solve(crossprod(x[, -1]) + diag(1, nrow = ncol(x[, -1]))))
   
 
   iter <- 1
@@ -76,7 +76,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha){
    beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
 
           
-   iter_run <- foreach(beta_i = itertools::isplitCols(beta_mat, chunks = M), eta_i = itertools::isplitCols(eta_mat, chunks = M), dat_i = dat_inverses, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list, .packages = "QRADMM" ) %dopar%{
+   iter_run <- foreach(beta_i = itertools::isplitCols(beta_mat, chunks = M), eta_i = itertools::isplitCols(eta_mat, chunks = M), dat_i = dat_inverses, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list, .packages = "QRADMM", .noexport = "dat" ) %dopar%{
      
      n_i <- nrow(design_i)
      ParamUpdates(betar = beta_i, etar = eta_i, xr = design_i, yr = outcome_i, dat = dat_i, ur = u_i, rr = r_i, beta = beta_global_i, rho = rho, alpha = alpha, tau = tau, n = n, ni = n_i )
