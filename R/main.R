@@ -40,7 +40,7 @@ update_beta <- function(penalty, pen_deriv, lambda, rho, beta_mat, eta_avg){
       
     }
   
-  
+
   
 }
 
@@ -57,8 +57,9 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
   
   designmat_list <- lapply(dat_list, function(x) x[, -1])
   
-  dat_inverses <- foreach(dat_list, function(x) solve(crossprod(x[, -1]) + diag(1, nrow = ncol(x[, -1]))))
+  dat_inverses <- lapply(dat_list, function(x) solve(crossprod(x[, -1]) + diag(1, nrow = ncol(x[, -1]))))
   
+
   n <- nrow(dat)
   p <- ncol(dat) - 1
 
@@ -75,10 +76,10 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
   iter <- 1
   keep_going <- T
   
-  while(keep_going || iter < maxiter){
+  while(keep_going && iter < maxiter){
    beta_old <- beta_global_i
    beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
-
+  
           
    iter_run <- foreach(beta_i = itertools::isplitCols(beta_mat, chunks = M), eta_i = itertools::isplitCols(eta_mat, chunks = M), dat_i = dat_inverses, outcome_i = outcome_list, design_i = designmat_list, u_i = u_list, r_i = r_list, .packages = "QRADMM", .noexport = "dat" ) %dopar%{
      
@@ -96,7 +97,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
    
    r_list <- lapply(iter_run, function(x) x$ri)
    
-   keep_going <- !check_convergence(dat, rho, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
+   keep_going <- !check_convergence(dat, rho/n, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
    iter <- iter + 1
   
   }
