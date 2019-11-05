@@ -1,48 +1,6 @@
-split_data <- function(data_set, n_chunks){
-  
-  indices <- rep_len(1:n_chunks, floor(nrow(data_set)/n_chunks) + (nrow(data_set) %% n_chunks))
-  
-  lapply(1:n_chunks, function(x) data_set[indices == x, ])
-  
-  
-  
-  
-}
-
-shrink <- function(u, v){
-  
-  
-  (1 + sign(u - v))/2*(u - v) - (1 + sign(-u - v))/2*(-u-v)
-  
-  
-  
-}
 
 
 
-update_beta <- function(penalty, pen_deriv, lambda, rho, beta_mat, eta_avg){
-  
-  M <- ncol(beta_mat)
-  
-  beta_vec <- rowMeans(beta_mat)
-  
-  if(penalty == "lasso"){
-    
-  shrink(beta_vec + eta_avg/rho, lambda/(M*rho))
-    
-  } else if(penalty == "scad" | penalty == "mcp"){
-      
-      
-      
-    } else{
-      
-      stop("You've supplied an unsupported penalty function.")
-      
-    }
-  
-
-  
-}
 
 
 
