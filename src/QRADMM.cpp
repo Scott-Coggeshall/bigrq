@@ -367,7 +367,7 @@ arma::vec betaupdate(arma::mat ima,arma::mat x,arma::vec y, arma::vec beta,int m
 }
 
 //[[Rcpp::export]]
-arma::vec QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,int iter, bool intercept,String penalty, double a,double lambda1,double lambda2){
+arma::List QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,int iter, bool intercept,String penalty, double a,double lambda1,double lambda2){
 
     int maxit=(iter);
     int n=x.n_rows, p=x.n_cols;
@@ -388,6 +388,7 @@ arma::vec QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,
     double ABSTOL = 1e-7,RELTOL = 1e-4;
     double rnorm,epspri,snorm,epsdual,alpha=1.0;
     int iteration=1;
+    int converged = 0;
     arma::vec u=arma::zeros(n),xbeta;
     r=y-x*beta;
     betaold=beta;
@@ -427,14 +428,17 @@ arma::vec QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,
             epsdual = sqrt(n)*ABSTOL + RELTOL*sqrt(accu(square(u)));
         }
 
-        if (rnorm < epspri && snorm < epsdual)
+        if (rnorm < epspri && snorm < epsdual){
+            
+            converged = 1;
             iteration = maxit+1;
-        else
+        }
+        else {
             iteration = iteration + 1;
-
+        }
     }
 
     arma::vec betanew=beta;
-    return betanew;
+    return List::create(Named("beta") = betanew, Named("converged") = converged);
 
 }
