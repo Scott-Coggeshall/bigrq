@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 check_convergence <- function(dat, rho, beta_vec, beta_old_vec, r_vec, u_vec, abstol, reltol){
   
   n <- nrow(dat)
@@ -23,8 +23,7 @@ check_convergence <- function(dat, rho, beta_vec, beta_old_vec, r_vec, u_vec, ab
   
   rnorm < epspri && snorm < epsdual
 }
-||||||| merged common ancestors
-=======
+
 check_convergence <- function(dat, rho, beta_vec, beta_old_vec, r_vec, abstol, reltol){
   
   n <- nrow(dat)
@@ -42,4 +41,4 @@ check_convergence <- function(dat, rho, beta_vec, beta_old_vec, r_vec, abstol, r
   
   rnorm < epspri && snorm < epsdual
 }
->>>>>>> d092ac4756e7207fee9831a293b844bbb28b497d
+
