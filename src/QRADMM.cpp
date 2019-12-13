@@ -367,7 +367,7 @@ arma::vec betaupdate(arma::mat ima,arma::mat x,arma::vec y, arma::vec beta,int m
 }
 
 //[[Rcpp::export]]
-arma::List QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,int iter, bool intercept,String penalty, double a,double lambda1,double lambda2){
+List QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,int iter, bool intercept,String penalty, double a,double lambda1,double lambda2){
 
     int maxit=(iter);
     int n=x.n_rows, p=x.n_cols;

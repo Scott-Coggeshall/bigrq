@@ -32,7 +32,7 @@ arma::vec deriv(arma::vec beta, double a, double lambda, String penalty){
 }
 
 //[[Rcpp::export]]
-arma::vec QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,int iter,bool intercept,int M,String penalty,double a){
+List QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,int iter,bool intercept,int M,String penalty,double a){
 
     int maxit=(iter);
     double tau=(ta),rho=(rhor),lambda=(lambdar),alpha=1.7;
@@ -40,6 +40,7 @@ arma::vec QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,i
     arma::vec y=(yr);
     int n=x.n_rows, p=x.n_cols;
     int ni = n/M;
+    int converged = 0;
     lambda = lambda/n, rho=rho/n;
 
     arma::vec r=arma::zeros(n),df,u=arma::zeros(n),beta,xbetai;
@@ -66,7 +67,7 @@ arma::vec QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,i
         else tmp = arma::eye(p,p)-xi.t()*(xi*xi.t()+arma::eye(ni,ni)).i()*xi;
         dat.slice(i)=tmp;
     }
-
+    arma::vec rnormvec = arma::zeros(maxit), snormvec = arma::zeros(maxit);
     int iteration=0;
     while(iteration<maxit){
         beta_avg=mean(betai,1);
@@ -93,7 +94,9 @@ arma::vec QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,i
             u.subvec(ni*i,ni*i+ni-1)=u.subvec(ni*i,ni*i+ni-1)+rho*(yi-xbetai-r.subvec(ni*i,ni*i+ni-1));
             etai.col(i)=etai.col(i)+rho*(betai.col(i)-beta);
         }
-
+        
+       
+        
         if(intercept){
           rnorm = sqrt(accu(square(y-x*beta-r)));
           snorm = sqrt(accu(square(rho*x.cols(1,p-1)*(beta.subvec(1,p-1)-betaold.subvec(1,p-1)))));
@@ -111,13 +114,18 @@ arma::vec QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,i
           epspri = sqrt(n)*ABSTOL + RELTOL*arma::max(comparev);
           epsdual = sqrt(n)*ABSTOL + RELTOL*sqrt(accu(square(u)));
         }
-
-        if (rnorm < epspri && snorm < epsdual)
+        
+        rnormvec(iteration) = rnorm;
+        snormvec(iteration) = snorm;
+        if (rnorm < epspri && snorm < epsdual){
+          converged = 1;
           iteration = maxit+1;
-        else
+        }
+        else {
           iteration = iteration + 1;
+        }
     }
 
     arma::vec betanew=beta;
-    return betanew;
+    return List::create(Named("beta") = betanew, Named("converged") = converged, Named("rnorm") = rnormvec, Named("snorm") = snormvec);
 }
