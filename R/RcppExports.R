@@ -24,11 +24,6 @@ QRADMMCPP <- function(x, y, tau, rho, lambda, iter, intercept, penalty, a, lambd
     .Call('_QRADMM_QRADMMCPP', PACKAGE = 'QRADMM', x, y, tau, rho, lambda, iter, intercept, penalty, a, lambda1, lambda2)
 }
 
-#' @export
-matInv <- function(x) {
-    .Call('_QRADMM_matInv', PACKAGE = 'QRADMM', x)
-}
-
 shrinkcpp1 <- function(u, v) {
     .Call('_QRADMM_shrinkcpp1', PACKAGE = 'QRADMM', u, v)
 }

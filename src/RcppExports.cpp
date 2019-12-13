@@ -30,7 +30,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // QRADMMCPP
-arma::vec QRADMMCPP(arma::mat x, arma::vec y, double tau, double rho, double lambda, int iter, bool intercept, String penalty, double a, double lambda1, double lambda2);
+List QRADMMCPP(arma::mat x, arma::vec y, double tau, double rho, double lambda, int iter, bool intercept, String penalty, double a, double lambda1, double lambda2);
 RcppExport SEXP _QRADMM_QRADMMCPP(SEXP xSEXP, SEXP ySEXP, SEXP tauSEXP, SEXP rhoSEXP, SEXP lambdaSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP penaltySEXP, SEXP aSEXP, SEXP lambda1SEXP, SEXP lambda2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -50,17 +50,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// matInv
-arma::mat matInv(arma::mat x);
-RcppExport SEXP _QRADMM_matInv(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(matInv(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // shrinkcpp1
 arma::vec shrinkcpp1(arma::vec u, arma::vec v);
 RcppExport SEXP _QRADMM_shrinkcpp1(SEXP uSEXP, SEXP vSEXP) {
@@ -74,7 +63,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // QRADM
-arma::vec QRADM(arma::mat xr, arma::vec yr, double ta, double rhor, double lambdar, int iter, bool intercept, int M, String penalty, double a);
+List QRADM(arma::mat xr, arma::vec yr, double ta, double rhor, double lambdar, int iter, bool intercept, int M, String penalty, double a);
 RcppExport SEXP _QRADMM_QRADM(SEXP xrSEXP, SEXP yrSEXP, SEXP taSEXP, SEXP rhorSEXP, SEXP lambdarSEXP, SEXP iterSEXP, SEXP interceptSEXP, SEXP MSEXP, SEXP penaltySEXP, SEXP aSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -97,7 +86,6 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_QRADMM_ParamUpdates", (DL_FUNC) &_QRADMM_ParamUpdates, 13},
     {"_QRADMM_QRADMMCPP", (DL_FUNC) &_QRADMM_QRADMMCPP, 11},
-    {"_QRADMM_matInv", (DL_FUNC) &_QRADMM_matInv, 1},
     {"_QRADMM_shrinkcpp1", (DL_FUNC) &_QRADMM_shrinkcpp1, 2},
     {"_QRADMM_QRADM", (DL_FUNC) &_QRADMM_QRADM, 10},
     {NULL, NULL, 0}
