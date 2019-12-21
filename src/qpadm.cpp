@@ -127,5 +127,5 @@ List QRADM(arma::mat xr,arma::vec yr,double ta,double rhor,double lambdar,int it
     }
 
     arma::vec betanew=beta;
-    return List::create(Named("beta") = betanew, Named("converged") = converged, Named("rnorm") = rnormvec, Named("snorm") = snormvec);
+    return List::create(Named("beta") = betanew, Named("converged") = converged, Named("rnorm") = rnormvec, Named("snorm") = snormvec, Named("finalr") = r);
 }

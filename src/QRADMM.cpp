@@ -439,6 +439,6 @@ List QRADMMCPP(arma::mat x,arma::vec y,double tau,double rho,double lambda,int i
     }
 
     arma::vec betanew=beta;
-    return List::create(Named("beta") = betanew, Named("converged") = converged);
+    return List::create(Named("beta") = betanew, Named("converged") = converged, Named("rnorm") = rnorm, Named("r_final") = r);
 
 }
