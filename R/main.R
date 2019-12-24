@@ -92,7 +92,8 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol =
   u_list <- lapply(1:M, function(x) rep(0, nrow(designmat_list[[x]])))
 
   r_list <- outcome_list
-
+  
+  resids_list <- u_list
 
 
   iter <- 1
@@ -120,6 +121,8 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol =
       u_list[[i]] <- as.vector(u_list[[i]] + rhon*(outcome_list[[i]] - xbeta - r_list[[i]]))
 
       eta_mat[, i] <- eta_mat[, i] + rhon*(beta_mat[,i] - beta_global_i)
+      
+      resids_list[[i]] <- outcome_list[[i]] - designmat_list[[i]]%*%beta_mat[,i] - r_list[[i]]
 
     }
 
@@ -138,7 +141,7 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol =
 
   }
 
-  list(iter = iter, beta = beta_global_i, r = r_list, u = u_list)
+  list(iter = iter, beta = beta_global_i, r = r_list, u = u_list, resids = resids_list)
 
 
 
