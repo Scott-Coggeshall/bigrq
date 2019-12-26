@@ -69,7 +69,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
 
 
 #' @export
-r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1e-7, reltol = 1e-4){
+r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, abstol = 1e-7, reltol = 1e-4){
 
   # splitting dat into M chunks so that these can be iterated over
   # in the foreach loop
@@ -101,13 +101,14 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol =
 
   rhon <- rho/n
   lambdan <- lambda/n
-
+  
+  if(!parallel){
   while( iter < maxiter){
     beta_old <- beta_global_i
     beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
 
 
-
+    
     for(i in 1:M){
 
       xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
@@ -139,6 +140,38 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol =
     # keep_going <- !check_convergence(dat, rho/n, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
     iter <- iter + 1
 
+    }
+  } else{
+    
+    while(iter < maxiter){
+      
+      beta_old <- beta_global_i
+      beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
+      
+      
+      
+      for(i in 1:M){
+        
+        xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
+        
+        r <- shrink(u_list[[i]]/rhon + outcome_list[[i]] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_list[[i]]))/(n*rhon))
+        
+        r_list[[i]] <- as.vector(r)
+        
+        beta_mat[, i] <- dat_inverses[[i]]%*%(t(designmat_list[[i]])%*%(outcome_list[[i]] - r + u_list[[i]]/rhon) - eta_mat[, i]/rhon + beta_global_i )
+        
+        u_list[[i]] <- as.vector(u_list[[i]] + rhon*(outcome_list[[i]] - xbeta - r_list[[i]]))
+        
+        eta_mat[, i] <- eta_mat[, i] + rhon*(beta_mat[,i] - beta_global_i)
+        
+        resids_list[[i]] <- outcome_list[[i]] - designmat_list[[i]]%*%beta_mat[,i] - r_list[[i]]
+        
+      }
+      
+      iter <- iter + 1
+      
+    }
+    
   }
 
   list(iter = iter, beta = beta_global_i, r = r_list, u = u_list, resids = resids_list)
