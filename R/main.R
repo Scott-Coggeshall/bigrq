@@ -94,7 +94,10 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty 
   r_list <- outcome_list
   
   resids_list <- u_list
-
+  
+  dont_export <- c("dat", "dat_list", "outcome_list", "designmat_list", "dat_inverses",
+                   "beta_mat", "beta_avg", "eta_mat", "eta_avg", "u_list", "r_list")
+  
 
   iter <- 1
 
@@ -148,26 +151,32 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty 
       beta_old <- beta_global_i
       beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
       
+     block_update <- foreach(designmat_i = designmat_list, outcome_i = outcome_list, inverse_i = dat_inverses, r_i = r_list, u_i = u_list, beta_i = itertools::isplitCols(beta_mat), eta_i = itertools::isplitCols(eta_mat),
+                             .noexport = dont_export ) %dopar%{
       
       
-      for(i in 1:M){
+      
         
-        xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
+        xbeta <- alpha*designmat_i%*%beta_i + (1 - alpha)*(outcome_i - r_i)
         
-        r <- shrink(u_list[[i]]/rhon + outcome_list[[i]] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_list[[i]]))/(n*rhon))
+        r <- shrink(u_i/rhon + outcome_i - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_i))/(n*rhon))
         
-        r_list[[i]] <- as.vector(r)
+      
         
-        beta_mat[, i] <- dat_inverses[[i]]%*%(t(designmat_list[[i]])%*%(outcome_list[[i]] - r + u_list[[i]]/rhon) - eta_mat[, i]/rhon + beta_global_i )
+        beta_i <- inverse_i%*%(t(designmat_i)%*%(outcome_i - r + u_i/rhon) - eta_i/rhon + beta_global_i )
         
-        u_list[[i]] <- as.vector(u_list[[i]] + rhon*(outcome_list[[i]] - xbeta - r_list[[i]]))
+        u_i <- as.vector(u_i + rhon*(outcome_i - xbeta - r_i))
         
-        eta_mat[, i] <- eta_mat[, i] + rhon*(beta_mat[,i] - beta_global_i)
+        eta_i <- eta_i + rhon*(beta_i - beta_global_i)
         
-        resids_list[[i]] <- outcome_list[[i]] - designmat_list[[i]]%*%beta_mat[,i] - r_list[[i]]
-        
+        list(beta_i = beta_i, eta_i = eta_i, r_i = r, u_i = u_i)
+
       }
       
+      r_list <- lapply(block_update, function(x) x$r_i)
+      u_list <- lapply(block_update, function(x) x$u_i)
+      beta_mat <- sapply(block_update, function(x) x$beta_i)
+      eta_mat <- sapply(blockupdate, function(x) x$eta_i)
       iter <- iter + 1
       
     }
