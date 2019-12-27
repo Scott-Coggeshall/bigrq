@@ -108,7 +108,7 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty 
   if(!parallel){
   while( iter < maxiter){
     beta_old <- beta_global_i
-    beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, rowMeans(eta_mat))
+    beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, eta_mat)
 
 
     
