@@ -105,8 +105,9 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty 
   rhon <- rho/n
   lambdan <- lambda/n
   
+  keep_going <- T
   if(!parallel){
-  while( iter < maxiter){
+  while( iter < maxiter & keep_going){
     beta_old <- beta_global_i
     beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, eta_mat)
 
@@ -140,7 +141,7 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty 
 
 
 
-    # keep_going <- !check_convergence(dat, rho/n, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
+    keep_going <- !check_convergence_standard(beta_old, beta_global_i, abstol)
     iter <- iter + 1
 
     }
