@@ -55,7 +55,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
    
    r_list <- lapply(iter_run, function(x) x$ri)
    
-   keep_going <- !check_convergence(dat, rho/n, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
+   if(iter > 1) keep_going <- !check_convergence(dat, rho/n, as.vector(beta_global_i), as.vector(beta_old), unlist(r_list), unlist(u_list), abstol, reltol)
    iter <- iter + 1
   
   }
@@ -69,7 +69,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
 
 
 #' @export
-r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, abstol = 1e-7, reltol = 1e-4){
+r_main <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, abstol = 1e-7, reltol = 1e-4){
 
   # splitting dat into M chunks so that these can be iterated over
   # in the foreach loop
@@ -141,7 +141,7 @@ r_main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, penalty 
 
 
 
-    keep_going <- !check_convergence_standard(beta_old, beta_global_i, abstol)
+    if(iter > miniter) keep_going <- !check_convergence_standard(beta_old, beta_global_i, abstol)
     iter <- iter + 1
 
     }

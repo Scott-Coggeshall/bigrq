@@ -24,7 +24,7 @@ check_convergence <- function(dat, rho, beta_vec, beta_old_vec, r_vec, u_vec, ab
   rnorm < epspri && snorm < epsdual
 }
 
-check_convergence_standard <- function(beta_old, beta_new, eps = 1e-6){
+check_convergence_standard <- function(beta_old, beta_new, eps){
   
   
   sqrt(sum((beta_old - beta_new)^2)) < eps
