@@ -145,11 +145,63 @@ r_main <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, 
 
 }
 
-r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, n_workers = NULL, chunk_size = NULL, abstol = 1e-7, reltol = 1e-4){
+r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, n_workers = NULL, abstol = 1e-7, reltol = 1e-4){
+  
+  
+  indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
+  
+  
+  n <- nrow(dat)
+  p <- ncol(dat) - 1
+  
+  beta_global_i <- rep(0, p)
+  beta_mat <- eta_mat <- matrix(0, nrow = p, ncol = M)
+  beta_avg <- eta_avg <- rowMeans(beta_mat)
+  
+  
+  u_mat <- r_mat <- resids_mat <-  matrix(0, nrow = floor(n/M) + n%%M, ncol = M)
+
+  # storing inverses in a p X M*p matrix
+  dat_inverses <- Reduce("cbind", lapply(split.data.frame(dat, indices ), function(x) solve(crossprod(x) + diag(1, nrow = p))))
   
   
   
   
+  iter <- 1
+  
+  
+  rhon <- rho/n
+  lambdan <- lambda/n
+  
+  keep_going <- T
+  
+  # first iteration
+  beta_old <- beta_global_i
+  beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, eta_mat)
+  
+  chunk_size = M/n_workers
+  
+  foreach(beta_mat_i = itertools::isplitCols(beta_mat, chunkSize = chunk_size ), eta_mat_i = itertools::isplitCols(eta_mat, chunkSize = chunk_size),
+          itertools::isplitCols(u_mat, chunkSize = chunk_size), itertools::isplitCols(r_mat, chunkSize = chunk_size), itertools::isplitCols(dat_inverses, chunk_size*p))%dopar%{
+            
+            
+            xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
+            
+            r <- shrink(u_list[[i]]/rhon + outcome_list[[i]] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_list[[i]]))/(n*rhon))
+            
+            r_list[[i]] <- as.vector(r)
+            
+            beta_mat[, i] <- dat_inverses[[i]]%*%(t(designmat_list[[i]])%*%(outcome_list[[i]] - r + u_list[[i]]/rhon) - eta_mat[, i]/rhon + beta_global_i )
+            
+            u_list[[i]] <- as.vector(u_list[[i]] + rhon*(outcome_list[[i]] - xbeta - r_list[[i]]))
+            
+            eta_mat[, i] <- eta_mat[, i] + rhon*(beta_mat[,i] - beta_global_i)
+            
+            resids_list[[i]] <- outcome_list[[i]] - designmat_list[[i]]%*%beta_mat[,i] - r_list[[i]]
+            
+            
+            
+          }
   
   
 }
