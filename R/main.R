@@ -69,7 +69,7 @@ main <- function(dat, M, intercept, maxiter, lambda, tau, rho, alpha, abstol = 1
 
 
 #' @export
-r_main <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, abstol = 1e-7, reltol = 1e-4){
+r_main <- function(dat, M, intercept, p_linear, p_nonlinear, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, abstol = 1e-7, reltol = 1e-4){
 
   # splitting dat into M chunks so that these can be iterated over
   # in the foreach loop
@@ -83,7 +83,10 @@ r_main <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, 
 
 
   n <- nrow(dat)
-  p <- ncol(dat) - 1
+  
+  p <- p_linear + p_nonlinear
+  
+  lambda <- c(rep(lambda, p_linear), rep(0, p_nonlinear))
 
   beta_global_i <- rep(0, p)
   beta_mat <- eta_mat <- matrix(0, nrow = p, ncol = M)
