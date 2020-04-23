@@ -5,3 +5,13 @@
 src/*.o
 src/*.so
 src/*.dll
+src-i386/header.hpp
+src-i386/Makevars.win
+src-i386/ParamUpdates.cpp
+src-i386/ParamUpdates.o
+src-i386/qpadm.cpp
+src-i386/qpadm.o
+src-i386/QRADMM.cpp
+src-i386/QRADMM.o
+src-i386/RcppExports.cpp
+src-i386/RcppExports.o
