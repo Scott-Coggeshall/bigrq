@@ -150,16 +150,14 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   
   indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
   
-  
+  n_lambda <- length(lambda)
   n <- nrow(dat)
   p <- ncol(dat) - 1
   
-  beta_global_i <- rep(0, p)
-  beta_mat <- eta_mat <- matrix(0, nrow = p, ncol = M)
-  beta_avg <- eta_avg <- rowMeans(beta_mat)
+  beta_global_i <- matrix(0,nrow = n_lambda, ncol = p)
+  beta_mat <- eta_mat <- beta_avg <- eta_avg <- lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol =  p))
   
-  
-  u_mat <- r_mat <- resids_mat <-  matrix(0, nrow = floor(n/M) + n%%M, ncol = M)
+  u_list <- r_list <- resids_list <-  lapply(1:M, function(x) rep(0, sum(indices == x)))
   
   # splitting data into M blocks
   dat_list <- split.data.frame(dat[, -1], indices)
@@ -186,8 +184,8 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   
   
   
-  foreach(beta_mat_i = itertools::isplitCols(beta_mat ), eta_mat_i = itertools::isplitCols(eta_mat),
-         , itertools::isplitCols(dat_inverses))%dopar%{
+  foreach(beta_mat_i = beta_mat, eta_mat_i = eta_mat, dat_i = dat_list, outcome_i = outcome_list,
+          inverse_i = dat_inverses)%dopar%{
             
             
             xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
