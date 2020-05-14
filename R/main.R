@@ -145,7 +145,7 @@ r_main <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, 
 
 }
 
-r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", parallel = FALSE, n_workers = NULL, abstol = 1e-7, reltol = 1e-4){
+r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", abstol = 1e-7, reltol = 1e-4){
   
   
   indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
@@ -160,9 +160,14 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   
   
   u_mat <- r_mat <- resids_mat <-  matrix(0, nrow = floor(n/M) + n%%M, ncol = M)
-
-  # storing inverses in a p X M*p matrix
-  dat_inverses <- Reduce("cbind", lapply(split.data.frame(dat, indices ), function(x) solve(crossprod(x) + diag(1, nrow = p))))
+  
+  # splitting data into M blocks
+  dat_list <- split.data.frame(dat[, -1], indices)
+  
+  # splitting outcome into M blocks
+  outcome_list <- lapply(split.data.frame(dat[,1, drop = F], indices), as.vector)
+  # storing inverses
+  dat_inverses <-  lapply(dat_list, function(x) solve(crossprod(x) + diag(1, nrow = p)))
   
   
   
@@ -179,10 +184,10 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   beta_old <- beta_global_i
   beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, eta_mat)
   
-  chunk_size = M/n_workers
   
-  foreach(beta_mat_i = itertools::isplitCols(beta_mat, chunkSize = chunk_size ), eta_mat_i = itertools::isplitCols(eta_mat, chunkSize = chunk_size),
-          itertools::isplitCols(u_mat, chunkSize = chunk_size), itertools::isplitCols(r_mat, chunkSize = chunk_size), itertools::isplitCols(dat_inverses, chunk_size*p))%dopar%{
+  
+  foreach(beta_mat_i = itertools::isplitCols(beta_mat ), eta_mat_i = itertools::isplitCols(eta_mat),
+         , itertools::isplitCols(dat_inverses))%dopar%{
             
             
             xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
