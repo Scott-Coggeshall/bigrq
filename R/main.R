@@ -185,23 +185,26 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   
   
   foreach(beta_mat_i = beta_mat, eta_mat_i = eta_mat, dat_i = dat_list, outcome_i = outcome_list,
-          inverse_i = dat_inverses)%dopar%{
+          inverse_i = dat_inverses, u_i = u_list, r_i = r_list, resids_i = resids_list)%dopar%{
             
+            # iterate over 
+            for(lambda_i in seq_along(lambdan)){
+              
+            xbeta <- alpha*dat_i%*%beta_mat_i[lambda_i,] + (1 - alpha)*(outcome_i - r_list_i[lambda_i, ])
             
-            xbeta <- alpha*designmat_list[[i]]%*%beta_mat[,i] + (1 - alpha)*(outcome_list[[i]] - r_list[[i]])
+            r <- shrink(u_list_i[lambda_i, ]/rhon + outcome_i - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_i))/(n*rhon))
             
-            r <- shrink(u_list[[i]]/rhon + outcome_list[[i]] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_list[[i]]))/(n*rhon))
+            r_list_i[lambda_i, ] <- as.vector(r)
             
-            r_list[[i]] <- as.vector(r)
+            beta_mat[, i] <- inverse_i%*%(t(dat_i)%*%(outcome_i - r + u_list_i[lambda_i, ]/rhon) - eta_mat_i[lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
             
-            beta_mat[, i] <- dat_inverses[[i]]%*%(t(designmat_list[[i]])%*%(outcome_list[[i]] - r + u_list[[i]]/rhon) - eta_mat[, i]/rhon + beta_global_i )
+            u_list[[i]] <- as.vector(u_list_i[lambda_i, ] + rhon*(outcome_i - xbeta - r_list_i[lambda_i, ]))
             
-            u_list[[i]] <- as.vector(u_list[[i]] + rhon*(outcome_list[[i]] - xbeta - r_list[[i]]))
+            eta_mat[, i] <- eta_mat_i[lambda_i, ] + rhon*(beta_mat_i[lambda_i,] - beta_global_i[lambda_i, ])
             
-            eta_mat[, i] <- eta_mat[, i] + rhon*(beta_mat[,i] - beta_global_i)
+            resids_list_i[lambda_i, ] <- outcome_i - dat_i%*%beta_mat_i[lambda_i,] - r_list[[i]]
             
-            resids_list[[i]] <- outcome_list[[i]] - designmat_list[[i]]%*%beta_mat[,i] - r_list[[i]]
-            
+            }
             
             
           }
