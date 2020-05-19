@@ -157,7 +157,7 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   beta_global_i <- matrix(0,nrow = n_lambda, ncol = p)
   beta_mat <- eta_mat <- beta_avg <- eta_avg <- lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol =  p))
   
-  u_list <- r_list <- resids_list <-  lapply(1:M, function(x) rep(0, sum(indices == x)))
+  u_list <- r_list <- resids_list <-  lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol = sum(indices == x)))
   
   # splitting data into M blocks
   dat_list <- split.data.frame(dat[, -1], indices)
@@ -180,34 +180,45 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   
   # first iteration
   beta_old <- beta_global_i
+  
+  while(keep_going){
   beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, eta_mat)
   
+ 
   
-  
-  foreach(beta_mat_i = beta_mat, eta_mat_i = eta_mat, dat_i = dat_list, outcome_i = outcome_list,
+  block_update <- foreach(beta_mat_i = beta_mat, eta_mat_i = eta_mat, dat_i = dat_list, outcome_i = outcome_list,
           inverse_i = dat_inverses, u_i = u_list, r_i = r_list, resids_i = resids_list)%dopar%{
             
-            # iterate over 
+            # iterate over lambda vals
             for(lambda_i in seq_along(lambdan)){
               
-            xbeta <- alpha*dat_i%*%beta_mat_i[lambda_i,] + (1 - alpha)*(outcome_i - r_list_i[lambda_i, ])
+            xbeta <- alpha*dat_i%*%beta_mat_i[lambda_i,] + (1 - alpha)*(outcome_i - r_i[lambda_i, ])
             
-            r <- shrink(u_list_i[lambda_i, ]/rhon + outcome_i - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_i))/(n*rhon))
+            r <- shrink(u_i[lambda_i, ]/rhon + outcome_i - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_i))/(n*rhon))
             
-            r_list_i[lambda_i, ] <- as.vector(r)
+            r_i[lambda_i, ] <- as.vector(r)
             
-            beta_mat[, i] <- inverse_i%*%(t(dat_i)%*%(outcome_i - r + u_list_i[lambda_i, ]/rhon) - eta_mat_i[lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
+            beta_mat_i[lambda_i, ] <- inverse_i%*%(t(dat_i)%*%(outcome_i - r_i[lambda_i, ] + u_i[lambda_i, ]/rhon) - eta_mat_i[lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
             
-            u_list[[i]] <- as.vector(u_list_i[lambda_i, ] + rhon*(outcome_i - xbeta - r_list_i[lambda_i, ]))
+            u_i[lambda_i, ] <- as.vector(u_i[lambda_i, ] + rhon*(outcome_i - xbeta - r_i[lambda_i, ]))
             
-            eta_mat[, i] <- eta_mat_i[lambda_i, ] + rhon*(beta_mat_i[lambda_i,] - beta_global_i[lambda_i, ])
+            eta_mat_i[lambda_i, ] <- eta_mat_i[lambda_i, ] + rhon*(beta_mat_i[lambda_i,] - beta_global_i[lambda_i, ])
             
-            resids_list_i[lambda_i, ] <- outcome_i - dat_i%*%beta_mat_i[lambda_i,] - r_list[[i]]
+            resids_i[lambda_i, ] <- outcome_i - dat_i%*%beta_mat_i[lambda_i,] - r_i[lambda_i, ]
             
             }
             
-            
+            list(beta_mat_i = beta_mat_i, eta_mat_i = eta_mat_i, u_i = u_i, r_i = r_i, resids_i = resids_i )
           }
-  
-  
+   
+    beta_mat <- lapply(block_update, function(x) x[[1]])
+    eta_mat <- lapply(block_update, function(x) x[[2]])
+    u_list <- lapply(block_update, function(x) x[[3]])
+    r_list <- lapply(block_update, function(x) x[[4]])
+    resids_list <- lapply(block_update, function(x) x[[5]])
+    
+    iter <- iter + 1
+    keep_going <- iter <= max_iter
+    
+  }
 }
