@@ -155,7 +155,7 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   p <- ncol(dat) - 1
   
   beta_global_i <- matrix(0,nrow = n_lambda, ncol = p)
-  beta_mat <- eta_mat <- beta_avg <- eta_avg <- lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol =  p))
+  beta_mat <- eta_mat  <- lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol =  p))
   
   u_list <- r_list <- resids_list <-  lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol = sum(indices == x)))
   

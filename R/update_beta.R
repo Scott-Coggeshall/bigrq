@@ -1,10 +1,15 @@
 
-update_beta <- function(penalty, pen_deriv, lambda, rho, beta_mat, eta_mat){
+update_beta <- function(penalty, pen_deriv, lambda, rho, beta_list, eta_list){
+ 
+  # convert lists to 3d arrays for easy application of rowMeans
+  M <- length(beta_list)
   
-  M <- ncol(beta_mat)
+  beta_array <- sapply(1:M, function(x) x, simplify = "array")
+  eta_array <- sapply(1:M, function(x) x, simplify = 'array')
   
-  beta_avg <- rowMeans(beta_mat)
-  eta_avg <- rowMeans(eta_mat)
+  
+  beta_avg <- rowMeans(beta_array, dims = 2)
+  eta_avg <- rowMeans(eta_array, dims = 2)
   if(penalty == "lasso"){
     
     shrink(beta_avg + eta_avg/rho, lambda/(M*rho))
