@@ -1,18 +1,17 @@
-Package: QRADMM
+Package: bigrq
 Type: Package
-Title: Quantile Regression with ADMM
+Title: Parallelized Quantile Regression with ADMM
 Version: 0.1.0
-Author: Liqun Yu and Nan Lin
-Maintainer: Liqun Yu <yuliqun88@gmail.com>
+Author: Scott Coggeshall
+Maintainer: Scott Coggeshall <scott.coggeshall@va.gov>
 Description: Fit the penalized quantile regression with the alternating direction method of multipliers.
-    The package currently supports the Lasso, elastic net, MCP, and SCAD penalties. The current implementation 
-    is only pseudo-parallel.
+    The package currently supports the Lasso, elastic net, MCP, and SCAD penalties.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-LinkingTo: Rcpp,RcppArmadillo, RcppParallel
-Imports: Rcpp,RcppArmadillo, RcppParallel, foreach, iterators, itertools
-RoxygenNote: 7.0.2
-NeedsCompilation: yes
+LinkingTo:
+Imports: 
+RoxygenNote: 6.0.1
+NeedsCompilation: no
 SystemRequirements: GNU make
-Packaged: 2018-05-12 16:19:58 UTC; Liqun
+
