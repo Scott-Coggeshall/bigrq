@@ -218,7 +218,7 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
     resids_list <- lapply(block_update, function(x) x[[5]])
     
     iter <- iter + 1
-    keep_going <- iter <= max_iter
+    keep_going <- (iter <= max_iter)
     
   }
 }
