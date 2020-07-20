@@ -148,11 +148,14 @@ r_main <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, 
 r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lambda, tau, rho, alpha, penalty = "lasso", abstol = 1e-7, reltol = 1e-4){
   
   
-  indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
   
   n_lambda <- length(lambda)
+  print("check")
   n <- nrow(dat)
   p <- ncol(dat) - 1
+  
+  indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
+  
   
   beta_global_i <- matrix(0,nrow = n_lambda, ncol = p)
   beta_mat <- eta_mat  <- lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol =  p))
@@ -165,9 +168,28 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
   # splitting outcome into M blocks
   outcome_list <- lapply(split.data.frame(dat[,1, drop = F], indices), as.vector)
   # storing inverses
-  dat_inverses <-  lapply(dat_list, function(x) solve(crossprod(x) + diag(1, nrow = p)))
+  if(n/M >= p){
+  dat_inverses <-  foreach(dat_i = dat_list)%dopar%{
+    solve(crossprod(dat_i) + diag(1, nrow = p))
+  }
   
+  } else{
+    
+  dat_inverses <- foreach(dat_i = dat_list)%dopar%{
+    
+    I_n <- diag(nrow(dat_i))
+    I_p <- diag(ncol(dat_i))
+    XXt <- tcrossprod(dat_i)
+    
+    B_inv <- solve(I_n + XXt)
+    
+   I_p - crossprod(dat_i, B_inv)%*%dat_i
+    
+  }  
+    
+  }
   
+  print('did inverses')
   
   
   iter <- 1
@@ -187,7 +209,7 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
  
   
   block_update <- foreach(beta_mat_i = beta_mat, eta_mat_i = eta_mat, dat_i = dat_list, outcome_i = outcome_list,
-          inverse_i = dat_inverses, u_i = u_list, r_i = r_list, resids_i = resids_list)%dopar%{
+          inverse_i = dat_inverses, u_i = u_list, r_i = r_list, resids_i = resids_list, .export = "shrink")%dopar%{
             
             # iterate over lambda vals
             for(lambda_i in seq_along(lambdan)){
@@ -217,8 +239,11 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, lamb
     r_list <- lapply(block_update, function(x) x[[4]])
     resids_list <- lapply(block_update, function(x) x[[5]])
     
+    print(iter)
     iter <- iter + 1
-    keep_going <- (iter <= max_iter)
+    keep_going <- (iter <= maxiter)
     
   }
+  
+  beta_global_i
 }
