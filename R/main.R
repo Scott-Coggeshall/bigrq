@@ -94,12 +94,11 @@ r_main <- function(dat, M, intercept, p_linear = NULL, maxiter = 500, miniter = 
 
 }
 
-r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", abstol = 1e-7, reltol = 1e-4){
+r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", abstol = 1e-7, reltol = 1e-4){
   
   
   
   n_lambda <- length(lambda)
-  print("check")
   n <- nrow(dat)
   p <- ncol(dat) - 1
   
@@ -115,84 +114,95 @@ r_main_parallel <- function(dat, M, intercept, maxiter = 500, miniter = 10, n_wo
   dat_list <- split.data.frame(dat[, -1], indices)
   
   # splitting outcome into M blocks
-  outcome_list <- lapply(split.data.frame(dat[,1, drop = F], indices), as.vector)
-  # storing inverses
-  if(n/M >= p){
-  dat_inverses <-  foreach(dat_i = dat_list)%dopar%{
-    solve(crossprod(dat_i) + diag(1, nrow = p))
-  }
   
-  } else{
+  
+  ## initializing workers
+  
+  cl <- makeCluster(n_workers, setup_strategy = "sequential")
+  on.exit(stopCluster(cl))
+  ## exporting objects shared by all workers
+  
+  clusterExport(cl, varlist = c("beta_global_i", "lambdan"))
+  
+  ## exporting chunked data to workers
+  
+  for(i in 1:n_workers){
     
-  dat_inverses <- foreach(dat_i = dat_list)%dopar%{
+    chunk_i <- dat_chunks[[i]]
     
-    I_n <- diag(nrow(dat_i))
-    I_p <- diag(ncol(dat_i))
-    XXt <- tcrossprod(dat_i)
-    
-    B_inv <- solve(I_n + XXt)
-    
-   I_p - t(dat_i)%*%B_inv%*%dat_i
-    
-  }  
+    clusterExport(cl[i], "chunk_i")
     
   }
   
-  print('did inverses')
+  ## initializing data containers on workers
   
+  clusterEvalQ(cl, {
+    
+    p <- ncol(beta_global_i)
+    
+    n_lambda <- length(lambdan)
+    beta_mat_i <- eta_mat_i <- lapply(chunk_i, function(x) matrix(0, nrow = n_lambda, ncol = p))
+    inverse_i <- lapply(chunk_i, function(x){
+                        if(nrow(x[, -1]) < ncol(x[, -1])){
+                                          
+                            compute_woodbury(x[, -1])
+                                          
+                          } else{
+                            solve(diag(1, nrow = nrow(x[, -1])) + crossprod(x[, -1]))
+                                        }
+                                        
+                                      })
+    u_i <- lapply(seq_along(chunk_i), function(i) matrix(0, nrow = n_lambda, ncol = nrow(chunk_i[[i]])))
+    r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = n_lambda, ncol = length(chunk_i[[i]][, 1])), byrow = T)
+    NULL
+                            
   
+    })
+
+  
+  ## entering while loop
   iter <- 1
-  
-  
-  rhon <- rho/n
-  lambdan <- lambda/n
-  
-  keep_going <- T
-  
-  # first iteration
-  beta_old <- beta_global_i
-  
-  while(keep_going){
-  beta_global_i <- update_beta(penalty, pen_deriv, lambda/n, rho/n, beta_mat, eta_mat)
-  
- 
-  
-  block_update <- foreach(beta_mat_i = beta_mat, eta_mat_i = eta_mat, dat_i = dat_list, outcome_i = outcome_list,
-          inverse_i = dat_inverses, u_i = u_list, r_i = r_list, resids_i = resids_list, .export = "shrink")%dopar%{
-            
-            # iterate over lambda vals
-            for(lambda_i in seq_along(lambdan)){
-              
-            xbeta <- alpha*dat_i%*%beta_mat_i[lambda_i,] + (1 - alpha)*(outcome_i - r_i[lambda_i, ])
-            
-            r <- shrink(u_i[lambda_i, ]/rhon + outcome_i - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(outcome_i))/(n*rhon))
-            
-            r_i[lambda_i, ] <- as.vector(r)
-            
-            beta_mat_i[lambda_i, ] <- inverse_i%*%(t(dat_i)%*%(outcome_i - r_i[lambda_i, ] + u_i[lambda_i, ]/rhon) - eta_mat_i[lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
-            
-            u_i[lambda_i, ] <- as.vector(u_i[lambda_i, ] + rhon*(outcome_i - xbeta - r_i[lambda_i, ]))
-            
-            eta_mat_i[lambda_i, ] <- eta_mat_i[lambda_i, ] + rhon*(beta_mat_i[lambda_i,] - beta_global_i[lambda_i, ])
-            
-            resids_i[lambda_i, ] <- outcome_i - dat_i%*%beta_mat_i[lambda_i,] - r_i[lambda_i, ]
-            
-            }
-            
-            list(beta_mat_i = beta_mat_i, eta_mat_i = eta_mat_i, u_i = u_i, r_i = r_i, resids_i = resids_i )
-          }
-   
-    beta_mat <- lapply(block_update, function(x) x[[1]])
-    eta_mat <- lapply(block_update, function(x) x[[2]])
-    u_list <- lapply(block_update, function(x) x[[3]])
-    r_list <- lapply(block_update, function(x) x[[4]])
-    resids_list <- lapply(block_update, function(x) x[[5]])
+  while(iter <= max_iter){
     
-    print(iter)
-    iter <- iter + 1
-    keep_going <- (iter <= maxiter)
+    ## global beta update beta_global_i <- update_beta
+    block_updates <- clusterEvalQ(cl, {
+      
+      for(i in seq_along(inverse_i)){
+        # iterate over lambda vals
+        for(lambda_i in seq_along(lambdan)){
+          
+          xbeta <- alpha*chunk_i[[i]][, -1]%*%beta_mat_i[[i]][lambda_i,] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ])
+          
+          
+          r_i[[i]][lambda_i, ] <- shrink(u_i[[i]][lambda_i, ]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
+          
+          
+          beta_mat_i[[i]][lambda_i, ] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ] + u_i[[i]][lambda_i, ]/rhon) - eta_mat_i[[i]][lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
+          
+          u_i[[i]][lambda_i, ] <- as.vector(u_i[lambda_i, ] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]][lambda_i, ]))
+          
+          eta_mat_i[[i]][lambda_i, ] <- eta_mat_i[[i]][lambda_i, ] + rhon*(beta_mat_i[[i]][lambda_i,] - beta_global_i[lambda_i, ])
+          
+          
+          
+        }
+        
+        
+      }
+      
+      beta_mat_i
+      
+    })
+    
+    
     
   }
   
-  beta_global_i
+ beta_global_i
+  
 }
+
+
+
+
+
