@@ -145,7 +145,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     inverse_i <- lapply(chunk_i, function(x){
                         if(nrow(x[, -1]) < ncol(x[, -1])){
                                           
-                            compute_woodbury(x[, -1])
+                            bigrq::compute_woodbury(x[, -1])
                                           
                           } else{
                             solve(diag(1, nrow = nrow(x[, -1])) + crossprod(x[, -1]))
@@ -179,7 +179,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
           
           beta_mat_i[[i]][lambda_i, ] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ] + u_i[[i]][lambda_i, ]/rhon) - eta_mat_i[[i]][lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
           
-          u_i[[i]][lambda_i, ] <- as.vector(u_i[lambda_i, ] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]][lambda_i, ]))
+          u_i[[i]][lambda_i, ] <- as.vector(u_i[[i]][lambda_i, ] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]][lambda_i, ]))
           
           eta_mat_i[[i]][lambda_i, ] <- eta_mat_i[[i]][lambda_i, ] + rhon*(beta_mat_i[[i]][lambda_i,] - beta_global_i[lambda_i, ])
           
