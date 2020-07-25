@@ -105,11 +105,8 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
   
   
-  beta_global_i <- matrix(0,nrow = n_lambda, ncol = p)
-  beta_mat <- eta_mat  <- lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol =  p))
-  
-  u_list <- r_list <- resids_list <-  lapply(1:M, function(x) matrix(0, nrow = n_lambda, ncol = sum(indices == x)))
-  
+  beta_global_i <- matrix(0,nrow = p, ncol = n_lambda)
+ 
   # splitting data into M blocks
   dat_list <- split.data.frame(dat[, -1], indices)
   
@@ -118,11 +115,11 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   
   ## initializing workers
   
-  cl <- makeCluster(n_workers, setup_strategy = "sequential")
+  cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
   on.exit(stopCluster(cl))
   ## exporting objects shared by all workers
   
-  clusterExport(cl, varlist = c("beta_global_i", "lambdan"))
+  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan"))
   
   ## exporting chunked data to workers
   
@@ -130,25 +127,25 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     chunk_i <- dat_chunks[[i]]
     
-    clusterExport(cl[i], "chunk_i")
+    parallel::clusterExport(cl[i], "chunk_i")
     
   }
   
   ## initializing data containers on workers
   
-  clusterEvalQ(cl, {
+  parallel::clusterEvalQ(cl, {
     
     p <- ncol(beta_global_i)
     
     n_lambda <- length(lambdan)
-    beta_mat_i <- eta_mat_i <- lapply(chunk_i, function(x) matrix(0, nrow = n_lambda, ncol = p))
+    beta_mat_i <- eta_mat_i <- lapply(chunk_i, function(x) matrix(0, nrow = p, ncol = n_lambda))
     inverse_i <- lapply(chunk_i, function(x){
                         if(nrow(x[, -1]) < ncol(x[, -1])){
                                           
                             bigrq::compute_woodbury(x[, -1])
                                           
                           } else{
-                            solve(diag(1, nrow = nrow(x[, -1])) + crossprod(x[, -1]))
+                            solve(diag(1, nrow = ncol(x[, -1])) + crossprod(x[, -1]))
                                         }
                                         
                                       })
@@ -165,29 +162,37 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   while(iter <= max_iter){
     
     ## global beta update beta_global_i <- update_beta
-    block_updates <- clusterEvalQ(cl, {
+    block_updates <- parallel::clusterEvalQ(cl, {
       
       for(i in seq_along(inverse_i)){
         # iterate over lambda vals
-        for(lambda_i in seq_along(lambdan)){
-          
-          xbeta <- alpha*chunk_i[[i]][, -1]%*%beta_mat_i[[i]][lambda_i,] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ])
-          
-          
-          r_i[[i]][lambda_i, ] <- shrink(u_i[[i]][lambda_i, ]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
-          
-          
-          beta_mat_i[[i]][lambda_i, ] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ] + u_i[[i]][lambda_i, ]/rhon) - eta_mat_i[[i]][lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
-          
-          u_i[[i]][lambda_i, ] <- as.vector(u_i[[i]][lambda_i, ] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]][lambda_i, ]))
-          
-          eta_mat_i[[i]][lambda_i, ] <- eta_mat_i[[i]][lambda_i, ] + rhon*(beta_mat_i[[i]][lambda_i,] - beta_global_i[lambda_i, ])
-          
-          
-          
-        }
+        # for(lambda_i in seq_along(lambdan)){
+        #   
+        #   xbeta <- alpha*chunk_i[[i]][, -1]%*%beta_mat_i[[i]][lambda_i,] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ])
+        #   
+        #   
+        #   r_i[[i]][lambda_i, ] <- shrink(u_i[[i]][lambda_i, ]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
+        #   
+        #   
+        #   beta_mat_i[[i]][lambda_i, ] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]][lambda_i, ] + u_i[[i]][lambda_i, ]/rhon) - eta_mat_i[[i]][lambda_i, ]/rhon + beta_global_i[lambda_i, ] )
+        #   
+        #   u_i[[i]][lambda_i, ] <- as.vector(u_i[[i]][lambda_i, ] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]][lambda_i, ]))
+        #   
+        #   eta_mat_i[[i]][lambda_i, ] <- eta_mat_i[[i]][lambda_i, ] + rhon*(beta_mat_i[[i]][lambda_i,] - beta_global_i[lambda_i, ])
+        #   
+        #   
+        #   
+        # }
+        ## xbeta is now a matrix
+        xbeta <- alpha*chunk_i[[i]][, -1]%*%beta_mat_i[[i]] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
         
+        r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
+        beta_mat_i[[i]] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - eta_mat_i[[i]]/rhon + beta_global_i)
+        
+        u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
+        
+        eta_mat_i[[i]] <- eta_mat_i[[i]] + rhon*(beta_mat_i[[i]] - beta_global_i)
       }
       
       beta_mat_i
