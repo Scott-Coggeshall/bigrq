@@ -128,7 +128,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     chunk_i <- dat_chunks[[i]]
     
-    parallel::clusterExport(cl[i], "chunk_i")
+    parallel::clusterExport(cl[i], "chunk_i", envir = environment())
     
   }
   rm(chunk_i)
@@ -139,7 +139,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     p <- ncol(beta_global_i)
     
     n_lambda <- length(lambdan)
-    param_list_i <- lapply(1:length(chunk_i), matrix(0, dim = c(2*p, n_lambda)))
+    param_list_i <- lapply(1:length(chunk_i), function(x) matrix(0, nrow = 2*p, ncol = n_lambda))
     inverse_i <- lapply(chunk_i, function(x){
                         if(nrow(x[, -1]) < ncol(x[, -1])){
                                           
@@ -151,7 +151,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
                                         
                                       })
     u_i <- lapply(seq_along(chunk_i), function(i) matrix(0, nrow = n_lambda, ncol = nrow(chunk_i[[i]])))
-    r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = n_lambda, ncol = length(chunk_i[[i]][, 1])), byrow = T)
+    r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = n_lambda, ncol = length(chunk_i[[i]][, 1]), byrow = T))
     NULL
                             
   
@@ -160,6 +160,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   
   ## entering while loop
   iter <- 1
+  block_updates <- lapply(dat_chunks, function(x) lapply(1:length(x), function(y) matrix(0, nrow = 2*p, ncol = n_lambda)))
   while(iter <= max_iter){
     
     param_list <- unlist(block_updates, recursive = FALSE)
