@@ -1,11 +1,13 @@
 
-update_beta <- function(penalty, pen_deriv, lambda, rho, beta_list, eta_list){
+update_beta <- function(penalty, pen_deriv = NULL, lambda, rho, param_list){
  
   # convert lists to 3d arrays for easy application of rowMeans
-  M <- length(beta_list)
+  M <- length(param_list)
   
-  beta_array <- sapply(1:M, function(x) beta_list[[x]], simplify = "array")
-  eta_array <- sapply(1:M, function(x) eta_list[[x]], simplify = 'array')
+  p <- dim(param_list[[1]])[1]/2
+  
+  beta_array <- sapply(1:M, function(x) param_list[[x]][1:p,], simplify = "array")
+  eta_array <- sapply(1:M, function(x) param_list[[x]][(p + 1):(2*p), ], simplify = 'array')
   
   
   beta_avg <- rowMeans(beta_array, dims = 2)

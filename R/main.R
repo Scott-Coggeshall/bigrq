@@ -138,7 +138,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     p <- ncol(beta_global_i)
     
     n_lambda <- length(lambdan)
-    beta_mat_i <- eta_mat_i <- array(0, dim = c(p, n_lambda, length(chunk_i)))
+    param_mat_i <- array(0, dim = c(2*p, n_lambda, length(chunk_i)))
     inverse_i <- lapply(chunk_i, function(x){
                         if(nrow(x[, -1]) < ncol(x[, -1])){
                                           
@@ -161,6 +161,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   iter <- 1
   while(iter <= max_iter){
     
+    param_list <- unlist(block_updates, recursive = FALSE)
     beta_global_i <- update_beta()
     ## global beta update beta_global_i <- update_beta
     block_updates <- parallel::clusterEvalQ(cl, {
@@ -185,18 +186,18 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
         #   
         # }
         ## xbeta is now a matrix
-        xbeta <- alpha*chunk_i[[i]][, -1]%*%beta_mat_i[,,i] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
+        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_mat_i[1:p,,i] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
         
         r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
-        beta_mat_i[,,i] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - eta_mat_i[,,i]/rhon + beta_global_i)
+        param_mat_i[1:p,,i] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - eta_mat_i[,,i]/rhon + beta_global_i)
         
         u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
         
-        eta_mat_i[,,i] <- eta_mat_i[,,i] + rhon*(beta_mat_i[,,i] - beta_global_i)
+        param_mat_i[(p+1):(2*p),,i] <- param_mat_i[(p + 1):(2*p),,i] + rhon*(param_mat_i[1:p,,i] - beta_global_i)
       }
       
-      beta_mat_i
+      param_mat_i
       
     })
     
