@@ -6,8 +6,8 @@ update_beta <- function(penalty, pen_deriv = NULL, lambda, rho, param_list){
   
   p <- dim(param_list[[1]])[1]/2
   
-  beta_array <- sapply(1:M, function(x) param_list[[x]][1:p,], simplify = "array")
-  eta_array <- sapply(1:M, function(x) param_list[[x]][(p + 1):(2*p), ], simplify = 'array')
+  beta_array <- sapply(1:M, function(x) param_list[[x]][1:p,, drop = FALSE], simplify = "array")
+  eta_array <- sapply(1:M, function(x) param_list[[x]][(p + 1):(2*p), , drop = FALSE], simplify = 'array')
   
   
   beta_avg <- rowMeans(beta_array, dims = 2)
