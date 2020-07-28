@@ -112,7 +112,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   dat_list <- split.data.frame(dat[, -1], indices)
   
   # splitting outcome into M blocks
-  
+  dat_chunks <- split(dat_list, 1:n_workers)
   
   ## initializing workers
   
@@ -131,7 +131,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     parallel::clusterExport(cl[i], "chunk_i")
     
   }
-  
+  rm(chunk_i)
   ## initializing data containers on workers
   
   parallel::clusterEvalQ(cl, {
