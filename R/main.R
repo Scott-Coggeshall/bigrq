@@ -101,7 +101,8 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   n_lambda <- length(lambda)
   n <- nrow(dat)
   p <- ncol(dat) - 1
-  
+  lambdan <- lambda/n
+  rhon <- rho/n
   indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
   
   
