@@ -136,7 +136,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   
   parallel::clusterEvalQ(cl, {
     
-    p <- ncol(beta_global_i)
+    p <- nrow(beta_global_i)
     
     n_lambda <- length(lambdan)
     param_list_i <- lapply(1:length(chunk_i), function(x) matrix(0, nrow = 2*p, ncol = n_lambda))
@@ -189,21 +189,23 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
         #   
         # }
         ## xbeta is now a matrix
-        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_list_i[[i]][1:p,] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
         
-        r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
-        param_list_i[[i]][1:p,] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p),]/rhon + beta_global_i)
+        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_list_i[[i]][1:p,, drop = FALSE]   #+ (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
         
-        u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
+       # r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
-        param_list_i[[i]][(p+1):(2*p),] <- param_list_i[[i]][(p + 1):(2*p),] + rhon*(param_list_i[1:p,] - beta_global_i)
+       #param_list_i[[i]][1:p,] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p),]/rhon + beta_global_i)
+        
+       #u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
+        
+       # param_list_i[[i]][(p+1):(2*p),] <- param_list_i[[i]][(p + 1):(2*p),] + rhon*(param_list_i[1:p,] - beta_global_i)
       }
       
       param_list_i
       
     })
-    
+    iter <- iter + 1
   }
   
  beta_global_i
