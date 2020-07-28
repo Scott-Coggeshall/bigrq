@@ -189,7 +189,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
         #   
         # }
         ## xbeta is now a matrix
-        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_mat_i[1:p,,i] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
+        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_list_i[[i]][1:p,] + (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
         
         r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
