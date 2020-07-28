@@ -109,7 +109,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   beta_global_i <- matrix(0,nrow = p, ncol = n_lambda)
  
   # splitting data into M blocks
-  dat_list <- split.data.frame(dat[, -1], indices)
+  dat_list <- split.data.frame(dat, indices)
   
   # splitting outcome into M blocks
   dat_chunks <- split(dat_list, 1:n_workers)
