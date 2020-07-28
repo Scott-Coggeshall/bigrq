@@ -120,7 +120,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   on.exit(stopCluster(cl))
   ## exporting objects shared by all workers
   
-  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan"), envir = environment())
+  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan", "alpha", "rhon"), envir = environment())
   
   ## exporting chunked data to workers
   
@@ -162,7 +162,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   iter <- 1
   block_updates <- lapply(dat_chunks, function(x) lapply(1:length(x), function(y) matrix(0, nrow = 2*p, ncol = n_lambda)))
   while(iter <= max_iter){
-    
+  
     param_list <- unlist(block_updates, recursive = FALSE)
     beta_global_i <- bigrq::update_beta(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
     parallel::clusterExport(cl, "beta_global_i", envir = environment())
@@ -203,8 +203,6 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
       param_list_i
       
     })
-    
-    
     
   }
   
