@@ -120,7 +120,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   on.exit(stopCluster(cl))
   ## exporting objects shared by all workers
   
-  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan", "alpha", "rhon"), envir = environment())
+  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan", "alpha", "rhon", "shrink", "tau", "n"), envir = environment())
   
   ## exporting chunked data to workers
   
@@ -150,8 +150,8 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
                                         }
                                         
                                       })
-    u_i <- lapply(seq_along(chunk_i), function(i) matrix(0, nrow = n_lambda, ncol = nrow(chunk_i[[i]])))
-    r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = n_lambda, ncol = length(chunk_i[[i]][, 1]), byrow = T))
+    u_i <- lapply(seq_along(chunk_i), function(i) matrix(0, nrow =  nrow(chunk_i[[i]]), ncol = n_lambda))
+    r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = length(chunk_i[[i]][, 1]), ncol = n_lambda))
     NULL
                             
   
@@ -191,15 +191,15 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
         ## xbeta is now a matrix
         
         
-        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_list_i[[i]][1:p,, drop = FALSE]   #+ (1 - alpha)*(chunk_i[[i]][, 1] - r_i[[i]])
+        xbeta <- alpha*chunk_i[[i]][, -1]%*%param_list_i[[i]][1:p,, drop = FALSE]   + (1 - alpha)*(chunk_i[[i]][, 1]- r_i[[i]])
         
-       # r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
+        r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
-       #param_list_i[[i]][1:p,] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p),]/rhon + beta_global_i)
+       param_list_i[[i]][1:p,] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p),]/rhon + beta_global_i)
         
-       #u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
+       u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
         
-       # param_list_i[[i]][(p+1):(2*p),] <- param_list_i[[i]][(p + 1):(2*p),] + rhon*(param_list_i[1:p,] - beta_global_i)
+        param_list_i[[i]][(p+1):(2*p),] <- param_list_i[[i]][(p + 1):(2*p),] + rhon*(param_list_i[1:p,] - beta_global_i)
       }
       
       param_list_i
