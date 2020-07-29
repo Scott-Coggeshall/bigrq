@@ -120,7 +120,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   on.exit(parallel::stopCluster(cl))
   ## exporting objects shared by all workers
   
-  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan", "alpha", "rhon", "shrink", "tau", "n"), envir = environment())
+  parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan", "alpha", "rhon", "shrink", "tau", "n", "compute_woodbury"), envir = environment())
   
   ## exporting chunked data to workers
   
@@ -143,7 +143,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     inverse_i <- lapply(chunk_i, function(x){
                         if(nrow(x[, -1]) < ncol(x[, -1])){
                                           
-                            bigrq::compute_woodbury(x[, -1])
+                            compute_woodbury(x[, -1])
                                           
                           } else{
                             solve(diag(1, nrow = ncol(x[, -1])) + crossprod(x[, -1]))
