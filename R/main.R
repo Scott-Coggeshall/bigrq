@@ -117,7 +117,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   ## initializing workers
   
   cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
-  on.exit(stopCluster(cl))
+  on.exit(parallel::stopCluster(cl))
   ## exporting objects shared by all workers
   
   parallel::clusterExport(cl, varlist = c("beta_global_i", "lambdan", "alpha", "rhon", "shrink", "tau", "n"), envir = environment())
