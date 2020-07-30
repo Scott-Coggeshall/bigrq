@@ -164,7 +164,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   while(iter <= max_iter){
   
     param_list <- unlist(block_updates, recursive = FALSE)
-    beta_global_i <- bigrq::update_beta(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
+    beta_global_i <- update_beta(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
     parallel::clusterExport(cl, "beta_global_i", envir = environment())
     ## global beta update beta_global_i <- update_beta
     block_updates <- parallel::clusterEvalQ(cl, {
