@@ -94,7 +94,7 @@ r_main <- function(dat, M, intercept, p_linear = NULL, maxiter = 500, miniter = 
 
 }
 
-r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", abstol = 1e-7, reltol = 1e-4){
+r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", inverses_write_path = NULL, inverses_read_path = NULL, abstol = 1e-7, reltol = 1e-4){
   
   
   
@@ -105,7 +105,13 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   rhon <- rho/n
   indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
   
+  if(!is.null(inverses_read_path)){
+    
+    inverses <- readRDS(inverses_read_path)
+    
+  }
   
+  if(length(inverses) != M) stop("Number of cached inverses does not match number of data blocks M.")
   beta_global_i <- matrix(0,nrow = p, ncol = n_lambda)
  
   # splitting data into M blocks
@@ -113,7 +119,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   
   # splitting outcome into M blocks
   dat_chunks <- suppressWarnings(split(dat_list, 1:n_workers))
-  
+  inverse_chunks <- suppressWarnings(split(inverses, 1:n_workers))
   ## initializing workers
   
   cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
@@ -127,11 +133,23 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   for(i in 1:n_workers){
     
     chunk_i <- dat_chunks[[i]]
+    if(!is.null(inverses_read_path)){
+    inverse_i <- inverse_chunks[[i]]
+    parallel::clusterExport(cl[i], c("chunk_i", "inverse_i"), envir = environment())
     
-    parallel::clusterExport(cl[i], "chunk_i", envir = environment())
-    
+    } else{
+      
+      parallel::clusterExport(cl[i], "inverse_i", envir = environment())
+      
+    }
   }
-  rm(chunk_i)
+  if(!is.null(inverses_read_path)){
+    rm(chunk_i)
+    } else{
+      
+    rm(chunk_i, inverse_i)
+        
+    }
   ## initializing data containers on workers
   
   parallel::clusterEvalQ(cl, {
@@ -140,6 +158,8 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     n_lambda <- length(lambdan)
     param_list_i <- lapply(1:length(chunk_i), function(x) matrix(0, nrow = 2*p, ncol = n_lambda))
+    
+    if(!exists("inverse_i")){
     inverse_i <- lapply(chunk_i, function(x){
                         if(nrow(x[, -1]) < ncol(x[, -1])){
                                           
@@ -150,6 +170,9 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
                                         }
                                         
                                       })
+    
+    }
+    
     u_i <- lapply(seq_along(chunk_i), function(i) matrix(0, nrow =  nrow(chunk_i[[i]]), ncol = n_lambda))
     r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = length(chunk_i[[i]][, 1]), ncol = n_lambda))
     NULL
@@ -207,8 +230,14 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     })
     iter <- iter + 1
   }
-  
- beta_global_i
+
+ if(!is.null(inverses_filepath)){ 
+   
+   inverses <- unlist(clusterEvalQ(cl, inverse_i), recursive = FALSE)
+   saveRDS(inverses, file = inverses_filepath)
+ 
+ }
+ list(coef = beta_global_i, iter = iter)
   
 }
 
