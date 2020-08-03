@@ -136,17 +136,18 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     inverses <- readRDS(inverses_read_path)
     
+    if(length(inverses) != M) stop("Number of cached inverses does not match number of data blocks M.")
   }
   
-  if(length(inverses) != M) stop("Number of cached inverses does not match number of data blocks M.")
+  
   beta_global_i <- matrix(0,nrow = p, ncol = n_lambda)
  
   # splitting data into M blocks
   dat_list <- suppressWarnings(split.data.frame(dat, indices))
   
-  # splitting outcome into M blocks
+  # chunking data
   dat_chunks <- suppressWarnings(split(dat_list, 1:n_workers))
-  inverse_chunks <- suppressWarnings(split(inverses, 1:n_workers))
+  if(!is.null(inverses_read_path)) inverse_chunks <- suppressWarnings(split(inverses, 1:n_workers))
   ## initializing workers
   
   cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
@@ -166,15 +167,15 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     } else{
       
-      parallel::clusterExport(cl[i], "inverse_i", envir = environment())
+      parallel::clusterExport(cl[i], "chunk_i", envir = environment())
       
     }
   }
   if(!is.null(inverses_read_path)){
-    rm(chunk_i)
+    rm(chunk_i, inverse_i)
     } else{
       
-    rm(chunk_i, inverse_i)
+    rm(chunk_i)
         
     }
   ## initializing data containers on workers
