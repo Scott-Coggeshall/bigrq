@@ -118,14 +118,17 @@ r_main <- function(dat, M, intercept, p_linear = NULL, maxiter = 500, miniter = 
 #' @param inverses_read_path a character string, the location to read the calculated inverses from.
 #' @param abstol
 #' @param reltol
-r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", penalized = rep(T, ncol(dat)), inverses_write_path = NULL, inverses_read_path = NULL, abstol = 1e-7, reltol = 1e-4){
+r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", penalized = c(F, rep(T, ncol(dat) - 2)), inverses_write_path = NULL, inverses_read_path = NULL, abstol = 1e-7, reltol = 1e-4){
   
   
   
   n_lambda <- length(lambda)
   n <- nrow(dat)
   p <- ncol(dat) - 1
-  lambdan <- lambda/n
+  penalized_mat <- matrix(penalized, nrow = p, ncol = n_lambda)
+  lambda_mat <- penalized_mat*rep(lambda, each = p)
+  
+  lambdan <- lambda_mat/n
   rhon <- rho/n
   indices <- rep(1:M, c(floor(n/M) + n%%M, rep(floor(n/M), M - 1)))  
   
