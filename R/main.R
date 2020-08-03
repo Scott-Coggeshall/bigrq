@@ -184,7 +184,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     p <- nrow(beta_global_i)
     
-    n_lambda <- length(lambdan)
+    n_lambda <- ncol(lambdan)
     param_list_i <- lapply(1:length(chunk_i), function(x) matrix(0, nrow = 2*p, ncol = n_lambda))
     
     if(!exists("inverse_i")){
@@ -213,9 +213,10 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   iter <- 1
   block_updates <- lapply(dat_chunks, function(x) lapply(1:length(x), function(y) matrix(0, nrow = 2*p, ncol = n_lambda)))
   while(iter <= max_iter){
-  
+    print(iter)
     param_list <- unlist(block_updates, recursive = FALSE)
     beta_global_i <- update_beta(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
+    print(dim(beta_global_i))
     parallel::clusterExport(cl, "beta_global_i", envir = environment())
     ## global beta update beta_global_i <- update_beta
     block_updates <- parallel::clusterEvalQ(cl, {
