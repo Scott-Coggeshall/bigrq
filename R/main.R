@@ -94,7 +94,31 @@ r_main <- function(dat, M, intercept, p_linear = NULL, maxiter = 500, miniter = 
 
 }
 
-r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", inverses_write_path = NULL, inverses_read_path = NULL, abstol = 1e-7, reltol = 1e-4){
+
+#' Fit Parallelized QRADMM
+#' 
+#' \code{r_main_parallel} is the model-fitting function for the parallelized QRADMM algorithm
+#' implemented entirely in R.
+#' 
+#' @param dat a numeric matrix where the first column is the vector of responses and the rest of the columns
+#' are the design matrix for the model.
+#' @param M an integer specifying the number of data blocks.
+#' @param intercept a logical indicating whether an intercept should be included in the model.
+#' @param max_iter an integer, the maximum number of iterations to run.
+#' @param min_iter an integer, the minimum number of iterations to run.
+#' @param n_workers an integer, the number of worker processes to create.
+#' @param lambda a numeric scalar or vector of non-zero values, the values for the tuning parameter.
+#' @param tau a numeric scalar between 0 and 1, the conditional quantile.
+#' @param rho a positive numeric scalar.
+#' @param alpha a positive numeric scalar.
+#' @param penalty a character string, the penalty to apply.
+#' @param penalized a logical vector of the same length as the number of model parameters, 
+#' TRUE values indicate that the corresponding parameter should be penalized.
+#' @param inverses_write_path a character string, the location to save the calculated inverses to.
+#' @param inverses_read_path a character string, the location to read the calculated inverses from.
+#' @param abstol
+#' @param reltol
+r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", penalized = rep(T, ncol(dat)), inverses_write_path = NULL, inverses_read_path = NULL, abstol = 1e-7, reltol = 1e-4){
   
   
   
