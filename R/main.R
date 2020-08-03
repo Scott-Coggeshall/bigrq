@@ -260,10 +260,10 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     iter <- iter + 1
   }
 
- if(!is.null(inverses_filepath)){ 
+ if(!is.null(inverses_write_path)){ 
    
    inverses <- unlist(clusterEvalQ(cl, inverse_i), recursive = FALSE)
-   saveRDS(inverses, file = inverses_filepath)
+   saveRDS(inverses, file = inverses_write_path)
  
  }
  list(coef = beta_global_i, iter = iter)
