@@ -14,7 +14,7 @@ update_beta <- function(penalty, pen_deriv = NULL, lambda, rho, param_list){
   eta_avg <- rowMeans(eta_array, dims = 2)
   if(penalty == "lasso"){
     
-    bigrq::shrink(beta_avg + eta_avg/rho, lambda/(M*rho))
+    shrink(beta_avg + eta_avg/rho, lambda/(M*rho))
     
   } else if(penalty == "scad"){
     
