@@ -165,6 +165,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
       
     })
     iter <- iter + 1
+    print(iter)
   }
 
  if(!is.null(inverses_write_path)){ 
