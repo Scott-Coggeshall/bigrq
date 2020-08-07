@@ -170,7 +170,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
 
  if(!is.null(inverses_write_path)){ 
    
-   inverses <- unlist(clusterEvalQ(cl, inverse_i), recursive = FALSE)
+   inverses <- unlist(parallel::clusterEvalQ(cl, inverse_i), recursive = FALSE)
    saveRDS(inverses, file = inverses_write_path)
  
  }
