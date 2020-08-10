@@ -1,7 +1,7 @@
 bigrq <- function(x, y, M = 1, intercept = TRUE, max_iter = 500, min_iter = 10, 
                   n_workers = floor(parallel::detectCores()/2), 
-                  lambda = 1, tau=0.5, rho = 10, alpha = 10, penalty = "lasso", inverses_read_path = "file", 
-                  inverses_write_path = "file", abstol = 10, reltol = 10){
+                  lambda = 1, tau=0.5, rho = 1, alpha = 1, penalty = "lasso", inverses_read_path = NULL, 
+                  inverses_write_path = NULL, abstol = 0.00001, reltol = 0.0001){
   
   ### Error checking block
   if(class(try(as.matrix(x), silent = TRUE))[1] == "try-error") {
