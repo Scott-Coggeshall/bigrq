@@ -57,7 +57,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   if(!is.null(inverses_read_path)) inverse_chunks <- suppressWarnings(split(inverses, 1:n_workers))
   ## initializing workers
   
-  cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
+  cl <- parallel::makeCluster(n_workers)
   on.exit(parallel::stopCluster(cl))
   ## exporting objects shared by all workers
   
