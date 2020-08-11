@@ -3,6 +3,8 @@ bigrq <- function(x, y, M = 1, intercept = TRUE, max_iter = 500, min_iter = 10,
                   lambda = 1, tau=0.5, rho = 1, alpha = 1, penalty = "lasso", penalized = rep(T, ncol(x)), inverses_read_path = NULL, 
                   inverses_write_path = NULL, abstol = 0.00001, reltol = 0.0001){
   
+  ### Capture call
+  this.call <- match.call()
   ### Error checking block
   if(class(try(as.matrix(x), silent = TRUE))[1] == "try-error") {
     stop("x could not be converted to matrix.")
@@ -59,6 +61,7 @@ bigrq <- function(x, y, M = 1, intercept = TRUE, max_iter = 500, min_iter = 10,
   output <- list()
   output$coef <- model$coef
   output$iter <- model$iter
-  
+  output$call <- this.call
+  output$lambda <- lambda
   return(output)
 }
