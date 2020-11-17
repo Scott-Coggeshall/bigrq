@@ -110,6 +110,12 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
     
     }
     
+    mat_i <- lapply(seq_along(inverse_i), function(i){
+      
+      tcrossprod(inverse_i[[i]], chunk_i[[i]][,-1])
+      
+    })
+    
     u_i <- lapply(seq_along(chunk_i), function(i) matrix(0, nrow =  nrow(chunk_i[[i]]), ncol = n_lambda))
     r_i <- lapply(seq_along(chunk_i), function(i) matrix(chunk_i[[i]][, 1], nrow = length(chunk_i[[i]][, 1]), ncol = n_lambda))
     NULL
@@ -121,11 +127,15 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   ## entering while loop
   iter <- 1
   block_updates <- lapply(dat_chunks, function(x) lapply(1:length(x), function(y) matrix(0, nrow = 2*p, ncol = n_lambda)))
+  
+  
+  
   while(iter <= max_iter){
   
     param_list <- unlist(block_updates, recursive = FALSE)
     beta_global_i <- update_beta(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
-   
+    
+
     parallel::clusterExport(cl, "beta_global_i", envir = environment())
     ## global beta update beta_global_i <- update_beta
     block_updates <- parallel::clusterEvalQ(cl, {
@@ -156,7 +166,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
         
         r_i[[i]] <- shrink(u_i[[i]]/rhon + chunk_i[[i]][, 1] - xbeta - .5*(2*tau - 1)/(n*rhon), .5*rep(1, length(chunk_i[[i]][, 1]))/(n*rhon))
         
-       param_list_i[[i]][1:p,] <- inverse_i[[i]]%*%(t(chunk_i[[i]][, -1])%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p),]/rhon + beta_global_i)
+       param_list_i[[i]][1:p,] <- mat_i[[i]]%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - inverse_i[[i]]%*%param_list_i[[i]][(p + 1):(2*p),]/rhon + inverse_i[[i]]%*%beta_global_i
         
        u_i[[i]] <- u_i[[i]] + rhon*(chunk_i[[i]][, 1] - xbeta - r_i[[i]])
         
