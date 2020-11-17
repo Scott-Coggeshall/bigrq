@@ -25,6 +25,8 @@
 #' @param inverses_read_path a character string, the location to read the calculated inverses from.
 #' @param abstol
 #' @param reltol
+#' 
+#' @export
 r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_workers, lambda, tau, rho, alpha, penalty = "lasso", penalized , inverses_write_path = NULL, inverses_read_path = NULL, abstol = 1e-7, reltol = 1e-4){
   
   

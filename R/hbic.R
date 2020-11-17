@@ -5,6 +5,7 @@
 #' @param x design matrix used in fitting the model.
 #' @param y vector containing the values of the outcome used in fitting the model.
 #' 
+#' @export
 #' @return a vector of HBIC values
 hbic <- function(coefs, tau, x, y, largep ){
   

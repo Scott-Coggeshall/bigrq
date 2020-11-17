@@ -11,6 +11,7 @@
 #' @param y_transform a vectorized function to be applied to the predictions.
 #' @param threshold the threshold to compare the predictions to.
 #' 
+#' @export
 #' @return a vector or matrix of classifications.
 classify_qr <- function(newx, coef, y_transform, threshold){
   
