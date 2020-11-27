@@ -11,6 +11,7 @@ Encoding: UTF-8
 LazyData: true
 LinkingTo:
 Imports: 
+        Matrix
 RoxygenNote: 7.1.1
 NeedsCompilation: no
 SystemRequirements: GNU make
