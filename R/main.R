@@ -59,7 +59,7 @@ r_main_parallel <- function(dat, M, intercept, max_iter = 500, min_iter = 10, n_
   if(!is.null(inverses_read_path)) inverse_chunks <- suppressWarnings(split(inverses, 1:n_workers))
   ## initializing workers
   
-  cl <- parallel::makeCluster(n_workers)
+  cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
   on.exit(parallel::stopCluster(cl))
   ## exporting objects shared by all workers
   
@@ -245,7 +245,7 @@ r_main_parallel_Matrix <- function(X, y, M, intercept, max_iter = 500, min_iter 
   }
   
   
-  beta_global_i <- matrix(0,nrow = p, ncol = n_lambda)
+  beta_global_i <- Matrix::Matrix(0,nrow = p, ncol = n_lambda, sparse = TRUE)
   
   # splitting data into M blocks
   X_list <- suppressWarnings(split.data.frame(X, indices))
@@ -256,7 +256,7 @@ r_main_parallel_Matrix <- function(X, y, M, intercept, max_iter = 500, min_iter 
   if(!is.null(inverses_read_path)) inverse_chunks <- suppressWarnings(split(inverses, 1:n_workers))
   ## initializing workers
   
-  cl <- parallel::makeCluster(n_workers)
+  cl <- parallel::makeCluster(n_workers, setup_strategy = "sequential")
   on.exit(parallel::stopCluster(cl))
   ## exporting objects shared by all workers
   
@@ -289,10 +289,10 @@ r_main_parallel_Matrix <- function(X, y, M, intercept, max_iter = 500, min_iter 
   
     parallel::clusterEvalQ(cl, {
 
-    p <- nrow(beta_global_i)
+    p <- beta_global_i@Dim[1]
     
     n_lambda <- ncol(lambdan)
-    param_list_i <- lapply(1:length(x_i), function(x) matrix(0, nrow = 2*p, ncol = n_lambda))
+    param_list_i <- lapply(1:length(x_i), function(x) Matrix::Matrix(0, nrow = 2*p, ncol = n_lambda, sparse = TRUE))
     
     if(!exists("inverse_i")){
       xx_i <- lapply(x_i, function(x){
@@ -309,8 +309,8 @@ r_main_parallel_Matrix <- function(X, y, M, intercept, max_iter = 500, min_iter 
     #   
     # })
     
-    u_i <- lapply(seq_along(y_i), function(i) matrix(0, nrow =  length(y_i[[i]]), ncol = n_lambda))
-    r_i <- lapply(seq_along(y_i), function(i) matrix(y_i[[i]], nrow = length(y_i[[i]]), ncol = n_lambda))
+    u_i <- lapply(seq_along(y_i), function(i) Matrix::Matrix(0, nrow =  length(y_i[[i]]), ncol = n_lambda))
+    r_i <- lapply(seq_along(y_i), function(i) Matrix::Matrix(y_i[[i]], nrow = length(y_i[[i]]), ncol = n_lambda))
     NULL
     
   })
@@ -319,14 +319,14 @@ r_main_parallel_Matrix <- function(X, y, M, intercept, max_iter = 500, min_iter 
   
   ## entering while loop
   iter <- 1
-  block_updates <- lapply(X_chunks, function(x) lapply(1:length(x), function(y) matrix(0, nrow = 2*p, ncol = n_lambda)))
+  block_updates <- lapply(X_chunks, function(x) lapply(1:length(x), function(y) Matrix::Matrix(0, nrow = 2*p, ncol = n_lambda)))
   
   
   
   while(iter <= max_iter){
     
     param_list <- unlist(block_updates, recursive = FALSE)
-    beta_global_i <- update_beta(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
+    beta_global_i <- update_beta_Matrix(penalty = penalty, lambda = lambdan, rho = rhon, param_list = param_list)
     
     
     parallel::clusterExport(cl, "beta_global_i", envir = environment())
@@ -361,14 +361,14 @@ r_main_parallel_Matrix <- function(X, y, M, intercept, max_iter = 500, min_iter 
 
         #param_list_i[[i]][1:p,] <- mat_i[[i]]%*%(chunk_i[[i]][, 1] - r_i[[i]] + u_i[[i]]/rhon) - inverse_i[[i]]%*%param_list_i[[i]][(p + 1):(2*p),]/rhon + inverse_i[[i]]%*%beta_global_i
 
-      #   param_list_i[[i]][1:p, ] <- Matrix::solve(xx_i[[i]], Matrix::crossprod(x_i[[i]], y_i[[i]] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p), ]/rhon + beta_global_i)
+        param_list_i[[i]][1:p, ] <- Matrix::solve(xx_i[[i]], Matrix::crossprod(x_i[[i]], y_i[[i]] - r_i[[i]] + u_i[[i]]/rhon) - param_list_i[[i]][(p + 1):(2*p), ]/rhon + beta_global_i)
       # 
-      #   u_i[[i]] <- u_i[[i]] + rhon*(y_i[[i]] - xbeta - r_i[[i]])
+        u_i[[i]] <- u_i[[i]] + rhon*(y_i[[i]] - xbeta - r_i[[i]])
       # 
-      #   param_list_i[[i]][(p+1):(2*p),] <- param_list_i[[i]][(p + 1):(2*p),] + rhon*(param_list_i[[i]][1:p,] - beta_global_i)
+       param_list_i[[i]][(p+1):(2*p),] <- param_list_i[[i]][(p + 1):(2*p),] + rhon*(param_list_i[[i]][1:p,] - beta_global_i)
        }
       # 
-      # param_list_i
+      param_list_i
       # 
     })
     iter <- iter + 1
